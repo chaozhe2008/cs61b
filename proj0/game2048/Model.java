@@ -5,7 +5,7 @@ import java.util.Observable;
 
 
 /** The state of a game of 2048.
- *  @author TODO: YOUR NAME HERE
+ *  @author zycao
  */
 public class Model extends Observable {
     /** Current contents of the board. */
@@ -109,16 +109,59 @@ public class Model extends Observable {
     public boolean tilt(Side side) {
         boolean changed;
         changed = false;
-
+        //---------------------------ToDo-------------------------------
         // TODO: Modify this.board (and perhaps this.score) to account
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
-
+        int size = board.size();
+        for (int col = 0; col < size; col++){
+             boolean colChanged = tiltCol(col, side);
+             if(colChanged) changed = true;
+        }
+        //--------------------------------------------------------------
         checkGameOver();
         if (changed) {
             setChanged();
         }
         return changed;
+    }
+
+    public boolean tiltCol(int col, Side side) {
+        boolean changed;
+        changed = false;
+        //---------------------------ToDo-------------------------------
+        int size = board.size();
+        boolean[] merged = new boolean[size];
+        for(int j = 0; j < size; j ++){merged[j] = false;}
+
+        Tile formerTile = null;
+        for (int row = size - 1; row >= 0; row--){
+            Tile currTile = board.tile(col, row);
+            if (currTile == null) continue;
+            if (formerTile == null){
+                if(currTile.row() != size - 1) changed = true;
+                board.move(col, size - 1, currTile);
+                formerTile = currTile;
+                continue;
+            }
+            int f_row = formerTile.row();
+            if (currTile.value() == formerTile.value() && !merged[f_row]){
+                formerTile = currTile.merge(col, f_row, formerTile);
+                board.move(col, f_row, currTile);
+                merged[f_row] = true;
+                changed = true;
+            }else{
+                if(currTile.row() != f_row - 1) changed = true;
+                board.move(col, f_row - 1, currTile);
+            }
+        }
+        return changed;
+        //--------------------------------------------------------------
+
+    }
+
+    public int getRow(int[] merged, Tile currTile){
+        int currRow =
     }
 
     /** Checks if the game is over and sets the gameOver variable
@@ -138,6 +181,14 @@ public class Model extends Observable {
      * */
     public static boolean emptySpaceExists(Board b) {
         // TODO: Fill in this function.
+        int size = b.size();
+        for (int r = 0; r < size; r++){
+            for (int c = 0; c < size; c++){
+                if (b.tile(c, r) == null){
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -148,6 +199,14 @@ public class Model extends Observable {
      */
     public static boolean maxTileExists(Board b) {
         // TODO: Fill in this function.
+        int size = b.size();
+        for (int r = 0; r < size; r++){
+            for (int c = 0; c < size; c++){
+                if (b.tile(c, r) != null && b.tile(c, r).value() == MAX_PIECE){
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -159,6 +218,20 @@ public class Model extends Observable {
      */
     public static boolean atLeastOneMoveExists(Board b) {
         // TODO: Fill in this function.
+        if(emptySpaceExists(b)) return true;
+        int size = b.size();
+        int[][] directions = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+        for (int r = 0; r < size; r++) {
+            for (int c = 0; c < size; c++) {
+                for (int nr = 0; nr < directions.length; nr++) {
+                    if (0 <= r + directions[nr][0] && r + directions[nr][0] < size &&
+                            0 <= c + directions[nr][1] && c + directions[nr][1] < size &&
+                            b.tile(c + directions[nr][1], r + directions[nr][0]).value() == b.tile(c, r).value()){
+                        return true;
+                    }
+                }
+            }
+        }
         return false;
     }
 

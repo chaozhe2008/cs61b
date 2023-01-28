@@ -1,4 +1,4 @@
-package SLList;
+package exercise2_2_2_SLList;
 
 public class SLList {
     public class IntNode {
