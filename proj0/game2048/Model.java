@@ -113,11 +113,13 @@ public class Model extends Observable {
         // TODO: Modify this.board (and perhaps this.score) to account
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
+        board.setViewingPerspective(side);
         int size = board.size();
         for (int col = 0; col < size; col++){
-             boolean colChanged = tiltCol(col, side);
+             boolean colChanged = tiltCol(col);
              if(colChanged) changed = true;
         }
+        board.setViewingPerspective(Side.NORTH);
         //--------------------------------------------------------------
         checkGameOver();
         if (changed) {
@@ -126,42 +128,51 @@ public class Model extends Observable {
         return changed;
     }
 
-    public boolean tiltCol(int col, Side side) {
-        boolean changed;
-        changed = false;
-        //---------------------------ToDo-------------------------------
-        int size = board.size();
-        boolean[] merged = new boolean[size];
-        for(int j = 0; j < size; j ++){merged[j] = false;}
+public boolean tiltCol(int col) {
+    boolean changed;
+    changed = false;
+    //---------------------------ToDo-------------------------------
+    int size = board.size();
+    boolean[] merged = new boolean[size];
+    for(int j = 0; j < size; j ++){merged[j] = false;}
 
-        Tile formerTile = null;
-        for (int row = size - 1; row >= 0; row--){
-            Tile currTile = board.tile(col, row);
-            if (currTile == null) continue;
-            if (formerTile == null){
-                if(currTile.row() != size - 1) changed = true;
-                board.move(col, size - 1, currTile);
-                formerTile = currTile;
-                continue;
-            }
-            int f_row = formerTile.row();
-            if (currTile.value() == formerTile.value() && !merged[f_row]){
-                formerTile = currTile.merge(col, f_row, formerTile);
-                board.move(col, f_row, currTile);
-                merged[f_row] = true;
-                changed = true;
-            }else{
-                if(currTile.row() != f_row - 1) changed = true;
-                board.move(col, f_row - 1, currTile);
-            }
+    Tile formerTile = null;
+    for (int row = size - 1; row >= 0; row--){
+        Tile currTile = board.tile(col, row);
+        if (currTile == null) continue;
+        if (formerTile == null){
+            if(row != size - 1) changed = true;
+            board.move(col, size - 1, currTile);
+            formerTile = board.tile(col, size-1);
+            continue;
         }
-        return changed;
-        //--------------------------------------------------------------
-
+        int new_row = getRow(merged, col, row);
+        if (new_row == row){
+            formerTile = currTile;
+            continue;
+        }
+        if(board.tile(col, new_row) != null){
+            score += 2 * board.tile(col, new_row).value();
+            merged[new_row] = true;
+        }
+        board.move(col, new_row, currTile);
+        changed = true;
+        formerTile = board.tile(col, new_row);
     }
+    return changed;
+    //--------------------------------------------------------------
+}
 
-    public int getRow(int[] merged, Tile currTile){
-        int currRow =
+    public int getRow(boolean[] merged, int currCol, int currRow){
+        Tile currTile = board.tile(currCol, currRow);
+        int formerRow = currRow + 1;
+        while(board.tile(currCol, formerRow) == null){formerRow++;}
+        Tile formerTile = board.tile(currCol, formerRow);
+        if (merged[formerRow] || formerTile.value() != currTile.value()){
+            return formerRow - 1;
+        }else{
+            return formerRow;
+        }
     }
 
     /** Checks if the game is over and sets the gameOver variable
