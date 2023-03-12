@@ -2,7 +2,9 @@ package gitlet;
 
 // TODO: any imports you need here
 
-import java.util.Date; // TODO: You'll likely use this in this class
+import java.io.Serializable;
+import java.util.*;
+import static gitlet.Utils.*;
 
 /** Represents a gitlet commit object.
  *  TODO: It's a good idea to give a description here of what else this Class
@@ -10,7 +12,7 @@ import java.util.Date; // TODO: You'll likely use this in this class
  *
  *  @author TODO
  */
-public class Commit {
+public class Commit implements Serializable {
     /**
      * TODO: add instance variables here.
      *
@@ -20,7 +22,61 @@ public class Commit {
      */
 
     /** The message of this Commit. */
-    private String message;
-
+    protected String message;
+    protected Date timestamp;
+    protected String parentID;
+    protected transient Commit parent;
+    protected Map<String, String> blobs;
+    protected Set<String> sha1Set;
     /* TODO: fill in the rest of this class. */
+
+    public Commit(){
+        this.message = "initial commit";
+        this.timestamp = new Date(0);
+        this.parentID = null;
+        this.parent = null;
+        this.blobs = new TreeMap<>();
+        this.sha1Set = new TreeSet<>();
+//        System.out.println(this);
+    }
+
+    public Commit(String msg){
+        this.message = msg;
+        this.timestamp = new Date();
+        this.parent = Repository.head;
+        this.parentID = Repository.head.getSha1();
+        this.blobs = this.parent.blobs;
+        this.sha1Set = this.parent.sha1Set;
+    }
+
+    @Override
+    public String toString(){
+        return "commit " + getSha1() + "\n" +
+                "Date " + timestamp.toString() + "\n"
+                + "message: " + message + "\n"
+                + "ParentCommit: " + this.parentID + "\n"
+                + "blobs: " + this.blobs;
+
+    }
+
+    public String getSha1(){
+        return sha1(serialize(this));
+    }
+
+    public String getBlobSha1(String fileName){
+        return blobs.get(fileName);
+    }
+
+    public void track(String fileName, String sha1){
+        sha1Set.add(sha1);
+        blobs.put(fileName, sha1);
+    }
+
+    public void deTrack(String fileName) {
+        if (blobs.keySet().contains(fileName)) {
+            sha1Set.remove(getBlobSha1(fileName));
+            blobs.remove(fileName);
+        }
+    }
+
 }
