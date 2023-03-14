@@ -21,16 +21,21 @@ public class Branch extends Repository{
         return join(BRANCH_DIR, currBranch);
     }
 
-    /** Read the head commit of the current repo (deserializing) */
     public static Commit getHead(){
         File currBranchFile = getCurrBranchFile();
         String currHeadId = readContentsAsString(currBranchFile);
         Commit currHead = readObject(join(COMMITS_DIR, currHeadId), Commit.class);
-        System.out.println("Current Head \n" + currHead);
+        //System.out.println("Current Head: \n" + currHead);
         return currHead;
     }
 
-
+    public static Commit getBranch(String branchName) {
+        File targetBranchFile = join(BRANCH_DIR, branchName);
+        String targetBranchId = readContentsAsString(targetBranchFile);
+        Commit targetBranch = readObject(join(COMMITS_DIR, targetBranchId), Commit.class);
+        //System.out.println("Target Branch: \n" + targetBranch);
+        return targetBranch;
+    }
     public static void createBranch(String branchName){
         if(plainFilenamesIn(BRANCH_DIR).contains(branchName)){
             System.out.println("A branch with that name already exists.");
@@ -40,5 +45,31 @@ public class Branch extends Repository{
         File currBranchFile = getCurrBranchFile();
         String currHeadId = readContentsAsString(currBranchFile);
         writeContents(branchFile, currHeadId);
+    }
+
+    public static void removeBranch(String branchName){
+        if(!plainFilenamesIn(BRANCH_DIR).contains(branchName)){
+            System.out.println("A branch with that name does not exist.");
+            System.exit(0);
+        }
+        if(readContentsAsString(HEAD_FILE).equals(branchName)){
+            System.out.println("Cannot remove the current branch.");
+            System.exit(0);
+        }
+        File branchFile = join(BRANCH_DIR, branchName);
+        branchFile.delete();
+    }
+
+    //----------------------testing methods--------------------//
+    public static void printHead(){
+        System.out.println("Curr Head: \n" + getHead());
+    }
+
+    public static void printCurrBranch(){
+        System.out.println("Curr Branch: \n" + readContentsAsString(HEAD_FILE));
+    }
+
+    public static void printBranch(String branchName){
+        System.out.println(branchName + "\n" + getBranch(branchName));
     }
 }

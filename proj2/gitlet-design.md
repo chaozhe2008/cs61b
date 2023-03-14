@@ -86,6 +86,49 @@
        * get current head
        * get current branch file
 * 修改结束后对已有功能进行测试(不包括branch和checkout) 未发现异常
-* 实现branch命令
+* 实现branch命令 测试通过
+* 实现rm-branch命令 测试通过
+* 实现checkout命令:
+    1. checkout -- fileName
+       * Takes the version of the file as it exists in the head commit and puts it in the working directory, 
+       * Overwriting the version of the file that’s already there if there is one. 
+       * The new version of the file is not staged.
+       * FAILURE: If the file does not exist in the previous commit, print "File does not exist in that commit." Do not change the CWD.
+    2. checkout commitID -- fileName
+       * Takes the version of the file in the commit with the given id, and puts it in the working directory
+       * FAILURE:
+         1. If no commit with the given id exists, print No commit with that id exists.
+         2. if the file does not exist in the given commit, print the same message as for failure case 1.
+    3. checkout branch
+       * Takes all files in the commit at the head of the given branch, and puts them in the working directory.
+       * At the end of this command, the given branch will now be considered the current branch (HEAD)
+       * Any files that are tracked in the current branch but are not present in the checked-out branch are deleted.
+       * The staging area is cleared.
+       * FAILURE: 
+         * If no branch with that name exists, print No such branch exists.
+         * If that branch is the current branch, print No need to checkout the current branch.
+         * If a working file is untracked in the current branch and would be overwritten by the checkout, print "..."
+* 测试checkout branch 出现问题 理清表述:
+    * TODO: Any files that are tracked in the current branch but are not present in the checked-out branch are deleted.
+    * FAILURE: If a working file is untracked in the current branch and would be overwritten by the checkout, print...
+* 翻译成中文:
+    * CWD中被当前branch追踪 却不会被要checkout的branch追踪的文件 会被删除
+    * 如果一个文件会被checkout 重写(与checkout branch中某个文件名字相同) 但是还没有被current branch追踪 则会报错
+    * 所以可以推知错误条件是：
+      1. current branch里没有当前文件的sha1
+      2. checkout branch中有当前文件的名字
+      3. checkout branch中的版本sha1和当前版本不一样
+    * 进一步得出结论：错误的条件是CWD中有某个文件的名字存在在checkout branch的追踪文件里 但其目前版本和checkout branch中的版本和current branch版本都不一样
+* 理清思路后解决上述问题 
+* 遇到新的问题：checkout可以正确修改branch里内容但是没有改变CWD中文件
+* 解决上述问题： 必须先switch head再check out file 因为我的 checkoutFile里面是先getHead来决定checkout哪个版本
+* checkout 测试通过 明天开始写status和merge
+
+
+## 3/13进度
+* 开始处理status 基本思路：
+    1. 
+
+
 
 

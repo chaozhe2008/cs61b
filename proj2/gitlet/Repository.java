@@ -2,6 +2,7 @@ package gitlet;
 
 import java.io.File;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -136,14 +137,12 @@ public class Repository {
             fileToDelete.delete();
         }
 
-        //System.out.println("Blobs after adding: " + newCommit.blobs);
 
         //De-tracking files in removal
         for(String fileName: plainFilenamesIn(REMOVAL_DIR)){
             newCommit.deTrack(fileName);
             unRemove(fileName);
         }
-        //System.out.println("Blobs after removal: " + newCommit.blobs);
 
         String newSha1 = newCommit.getSha1();
         File newCommitFile = join(COMMITS_DIR, newSha1);
@@ -242,59 +241,119 @@ public class Repository {
     }
 
 
-    /**
-     * TODO: implement branch-related
-     */
+    //---------------------------Checkout-------------------------------//
     public static void checkout(String... args){
         //case1: check out file name
-        if(args.length == 3) {
-            if (!plainFilenamesIn(CWD).contains(args[2])) {
-                System.out.println("File does not exist in that commit.");
-                System.exit(0);
-            }
-            checkoutFile(args[2]);
-        }
+        if(args.length == 3) {checkoutFile(args[2]);}
 
         //case2: check out a branch
-        if(args.length == 2){
-            if (!plainFilenamesIn(CWD).contains(args[1])) { //branch name contains
-                System.out.println("No such branch exists.");
-                System.exit(0);
-            }
-            checkoutBranch(args[1]);
-        }
-
+        if(args.length == 2){checkoutBranch(args[1]);}
 
         //case3:
-        if(args.length == 4){
-            if (!plainFilenamesIn(COMMITS_DIR).contains(args[1])) { //branch name contains
-                System.out.println("No commit with that id exists.");
-                System.exit(0);
-            }
-            checkoutCommitFile(args[1], args[3]);
-        }
+        if(args.length == 4){checkoutCommitFile(args[1], args[3]);}
 
     }
 
     private static void checkoutFile(String fileName) {
+        Commit currHead = getHead();
+        if (!currHead.blobs.keySet().contains(fileName)) {
+            System.out.println("File does not exist in that commit.");
+            System.exit(0);
+        }
+        String blobSha1 = currHead.getBlobSha1(fileName);
+        File fileToCheckout = join(BLOBS_DIR, blobSha1, fileName);
+        String fileContent = readContentsAsString(fileToCheckout);
 
+        File fileToOverwrite = join(CWD, fileName);
+        writeContents(fileToOverwrite, fileContent);
     }
 
     private static void checkoutBranch(String branchName) {
+        //Three failure cases
+        if (!plainFilenamesIn(BRANCH_DIR).contains(branchName)) { //branch name contains
+            System.out.println("No such branch exists.");
+            System.exit(0);
+        }
 
+        String currBranch = readContentsAsString(HEAD_FILE);
+        if (currBranch.equals(branchName)){
+            System.out.println("No need to checkout the current branch.");
+            System.exit(0);
+        }
+
+        Commit currHead = getHead();
+        Commit targetBranch = getBranch(branchName);
+        for (Map.Entry<String, String> entry : targetBranch.blobs.entrySet()) {
+            String newFileName = entry.getKey();
+            String newFileId = entry.getValue();
+            if(hasPlainFile(newFileName)){
+                File workingFile = join(CWD, newFileName);
+                String workingSha1 = sha1(readContents(workingFile));
+                if(!currHead.blobs.keySet().contains(newFileName)){continue;}
+                String currSha1 = currHead.blobs.get(newFileName);
+
+                if(!workingSha1.equals(newFileId) && !workingSha1.equals(currSha1)){
+                    System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+                    System.exit(0);
+                }
+            }
+        }
+        // No failure case detected, perform checkout
+
+        //Delete all the files in CWD and current head but not in target branch
+        Set<String> currTrackingNames = currHead.blobs.keySet();
+        Set<String> targetTrackingNames = targetBranch.blobs.keySet();
+        for(String fileName: currTrackingNames){
+            if(plainFilenamesIn(CWD).contains(fileName) && !targetTrackingNames.contains(fileName)){
+                restrictedDelete(join(CWD, fileName));
+            }
+        }
+
+        //switch branch -- switch before checkout file !!!
+        writeContents(HEAD_FILE, branchName);
+
+        //checkout target branch
+        for(String fileName: targetTrackingNames){checkoutFile(fileName);}
+
+        //Clear Staging area
+        clearStagingArea();
+
+        printCurrBranch();
+        printHead();
+    }
+
+    private static void checkoutCommitFile(String commitId, String fileName) {
+        if (!plainFilenamesIn(COMMITS_DIR).contains(commitId)) { //branch name contains
+            System.out.println("No commit with that id exists.");
+            System.exit(0);
+        }
+
+        Commit targetCommit = readObject(join(COMMITS_DIR, commitId), Commit.class);
+        if (!targetCommit.blobs.keySet().contains(fileName)) {
+            System.out.println("File does not exist in that commit.");
+            System.exit(0);
+        }
+
+        String blobSha1 = targetCommit.getBlobSha1(fileName);
+        File fileToCheckout = join(BLOBS_DIR, blobSha1, fileName);
+        String fileContent = readContentsAsString(fileToCheckout);
+
+        File fileToOverwrite = join(CWD, fileName);
+        writeContents(fileToOverwrite, fileContent);
     }
 
     /**
-     * TODO: handle the nonexisting file error.
-     * @param commitId
-     * @param fileName
+     * Helper function to clear the staging area
      */
-    private static void checkoutCommitFile(String commitId, String fileName) {
-
+    public static void clearStagingArea(){
+        for(String fileName: plainFilenamesIn(STAGING_AREA)){
+            join(STAGING_AREA, fileName).delete();
+        }
+        for(String fileName: plainFilenamesIn(REMOVAL_DIR)){
+            join(REMOVAL_DIR, fileName).delete();
+        }
     }
 
-
-
-
+    //----------------------------------------------------------------------//
 
 }

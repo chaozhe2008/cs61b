@@ -37,7 +37,6 @@ public class Commit implements Serializable {
         this.parent = null;
         this.blobs = new TreeMap<>();
         this.sha1Set = new TreeSet<>();
-//        System.out.println(this);
     }
 
     public Commit(String msg){

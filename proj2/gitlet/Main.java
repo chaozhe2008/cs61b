@@ -58,6 +58,10 @@ public class Main {
                 validateNumArgs(firstArg, args, 2);
                 Branch.createBranch(args[1]);
                 break;
+            case "rm-branch":
+                validateNumArgs(firstArg, args, 2);
+                Branch.removeBranch(args[1]);
+                break;
             default:
                 System.out.println("No command with that name exists.");
                 break;
@@ -84,6 +88,7 @@ public class Main {
                     System.out.println("Incorrect operands.");
                     System.exit(0);
                 }
+                break;
             }
 
             case "checkout": {
@@ -91,6 +96,7 @@ public class Main {
                     System.out.println("Incorrect operands.");
                     System.exit(0);
                 }
+                break;
             }
 
             default: {
