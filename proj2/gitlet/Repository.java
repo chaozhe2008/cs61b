@@ -3,8 +3,10 @@ package gitlet;
 import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeSet;
 
 import static gitlet.Utils.*;
+import static gitlet.Branch.*;
 
 // TODO: any imports you need here
 
@@ -37,11 +39,13 @@ public class Repository {
 
     /** The Blobs directory. */
     public static final File BLOBS_DIR = join(GITLET_DIR, "blobs");
-    public static final File headSha1 = join(COMMITS_DIR, "head");
+    public static final File BRANCH_DIR = join(GITLET_DIR, "branch");
+//    public static final File HEADFILE = join(BRANCH_DIR, "head");
+    public static final File REMOVAL_DIR = join(STAGING_AREA, "removal");
 
     /** Current commit (HEAD) */
     public static Commit head = new Commit();
-    public static Set<String> removal = new HashSet<>();
+    //public static Set<String> removal = new TreeSet<>();
 
     /* TODO: fill in the rest of this class. */
 //    public Repository(){
@@ -57,14 +61,13 @@ public class Repository {
         STAGING_AREA.mkdir();
         COMMITS_DIR.mkdir();
         BLOBS_DIR.mkdir();
-        Commit initialCommit = head;
-
-        String initialSha1 = initialCommit.getSha1();
+        REMOVAL_DIR.mkdir();
+//
+        String initialSha1 = head.getSha1();
         File initialCommitFile = join(COMMITS_DIR, initialSha1);
-//        File headSha1 = join(COMMITS_DIR, "head");
-        writeObject(initialCommitFile, initialCommit);
-        writeContents(headSha1, initialSha1);
-        System.out.println(initialCommit);
+        writeObject(initialCommitFile, head);
+        Branch.initBranch(head);
+        System.out.println(head);
     }
 
     /** Check if there is .gitlet directory in current directory */
@@ -75,15 +78,6 @@ public class Repository {
     /** Check if the given file name is a plain file in current repo */
     public static boolean hasPlainFile(String fileName){
         return plainFilenamesIn(CWD).contains(fileName);
-    }
-
-    /** Read the head commit of the current repo (deserializing) */
-    public static Commit getHead(){
-        String currHeadId = readContentsAsString(join(COMMITS_DIR, "head"));
-        System.out.println("Parent ID: " + currHeadId);
-
-        Commit currHead = readObject(join(COMMITS_DIR, currHeadId), Commit.class);
-        System.out.println(currHead);
     }
 
     /**
@@ -106,7 +100,7 @@ public class Repository {
                 }
             }
         }
-        removal.remove(fileName);
+        unRemove(fileName);
     }
 
     public static String createBlob(String fileName){
@@ -122,12 +116,16 @@ public class Repository {
 
     /**
      * DONE: commit the files in current staging area: create blobs, track the blobs
-     * TODO: Clear the staging area
      * TODO: serialize the new commit
      * TODO: set head pointer to new commit
      * @param msg
      */
     public static void commit(String msg){
+        if(plainFilenamesIn(STAGING_AREA).isEmpty() && plainFilenamesIn(REMOVAL_DIR).isEmpty()){
+            System.out.println("No changes added to the commit.");
+            return;
+        }
+
         Commit newCommit = new Commit(msg);
 
         //Tracking files in staging area
@@ -138,18 +136,19 @@ public class Repository {
             fileToDelete.delete();
         }
 
-        //De-tracking files in removal
-        for(String fileName: removal){
-            newCommit.deTrack(fileName);
-        }
+        //System.out.println("Blobs after adding: " + newCommit.blobs);
 
+        //De-tracking files in removal
+        for(String fileName: plainFilenamesIn(REMOVAL_DIR)){
+            newCommit.deTrack(fileName);
+            unRemove(fileName);
+        }
+        //System.out.println("Blobs after removal: " + newCommit.blobs);
 
         String newSha1 = newCommit.getSha1();
         File newCommitFile = join(COMMITS_DIR, newSha1);
         writeObject(newCommitFile, newCommit);
-        head = newCommit;
-        writeContents(headSha1, newSha1);
-
+        writeContents(getCurrBranchFile(), newSha1);
         System.out.println(newCommit);
     }
 
@@ -161,14 +160,17 @@ public class Repository {
     public static boolean remove(String fileName) {
         boolean res1 = false;
         boolean res2 = false;
+        Commit currHead = getHead();
         if (plainFilenamesIn(STAGING_AREA).contains(fileName)) {
             File fileToDelete = join(STAGING_AREA, fileName);
             if (!fileToDelete.isDirectory()) {fileToDelete.delete();}
             res1 = true;
         }
 
-        if(head.blobs.keySet().contains(fileName)){
-            removal.add(fileName);
+        if(currHead.blobs.keySet().contains(fileName)){
+            System.out.println("FILE TO BE DELETED IS BEING TRACKED");
+            File copyFile = join(REMOVAL_DIR, fileName);
+            writeContents(copyFile, "Stage for removal");
             if (hasPlainFile(fileName)){
                 restrictedDelete(fileName);
             }
@@ -177,7 +179,122 @@ public class Repository {
 
         boolean res = res1 || res2;
         if(res == false){System.out.println("No reason to remove the file.");}
-        return res1;
+        return res;
     }
+
+    public static void unRemove(String fileName) {
+        if(plainFilenamesIn(REMOVAL_DIR).contains(fileName)){
+            join(REMOVAL_DIR, fileName).delete();
+        }
+    }
+
+    /**
+     * TODO: 删除多余commit信息
+     * TODO: For merge commits (those that have two parent commits), add a line just below the first line
+     * TODO: for example: "Merge: 4975af1 2c1ead1"
+     * TODO: First one is the branch you were on when you did the merge; the second is that of the merged-in branch
+     */
+    public static void log(){
+        Commit currHead = getHead();
+        while(true){
+            System.out.println(currHead);
+            String parentId = currHead.parentID;
+            if(parentId == null){return;}
+            currHead = readObject(join(COMMITS_DIR, parentId), Commit.class);
+        }
+    }
+
+    /**
+     * Display information about all commits ever made. (No order)
+     */
+    public static void logGlobal(){
+        Commit commit;
+        for(String id: plainFilenamesIn(COMMITS_DIR)){
+            if(id.equals("head")){continue;}
+            commit = readObject(join(COMMITS_DIR, id), Commit.class);
+            System.out.println(commit);
+        }
+    }
+
+
+
+    /**Prints out the ids of all commits that have the given commit message */
+    public static void find(String targetMessage){
+        Commit commit;
+        boolean found = false;
+        for(String id: plainFilenamesIn(COMMITS_DIR)){
+            if(id.equals("head")){continue;}
+            commit = readObject(join(COMMITS_DIR, id), Commit.class);
+            if(commit.message.equals(targetMessage)){
+                System.out.println(id);
+                found = true;
+            }
+        }
+        if(!found){System.out.println("Found no commit with that message.");}
+    }
+
+
+    /**
+     * TODO: Not Implemented
+     */
+    public static void status(){
+
+    }
+
+
+    /**
+     * TODO: implement branch-related
+     */
+    public static void checkout(String... args){
+        //case1: check out file name
+        if(args.length == 3) {
+            if (!plainFilenamesIn(CWD).contains(args[2])) {
+                System.out.println("File does not exist in that commit.");
+                System.exit(0);
+            }
+            checkoutFile(args[2]);
+        }
+
+        //case2: check out a branch
+        if(args.length == 2){
+            if (!plainFilenamesIn(CWD).contains(args[1])) { //branch name contains
+                System.out.println("No such branch exists.");
+                System.exit(0);
+            }
+            checkoutBranch(args[1]);
+        }
+
+
+        //case3:
+        if(args.length == 4){
+            if (!plainFilenamesIn(COMMITS_DIR).contains(args[1])) { //branch name contains
+                System.out.println("No commit with that id exists.");
+                System.exit(0);
+            }
+            checkoutCommitFile(args[1], args[3]);
+        }
+
+    }
+
+    private static void checkoutFile(String fileName) {
+
+    }
+
+    private static void checkoutBranch(String branchName) {
+
+    }
+
+    /**
+     * TODO: handle the nonexisting file error.
+     * @param commitId
+     * @param fileName
+     */
+    private static void checkoutCommitFile(String commitId, String fileName) {
+
+    }
+
+
+
+
 
 }

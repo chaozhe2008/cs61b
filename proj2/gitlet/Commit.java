@@ -43,19 +43,21 @@ public class Commit implements Serializable {
     public Commit(String msg){
         this.message = msg;
         this.timestamp = new Date();
-        this.parent = Repository.head;
-        this.parentID = Repository.head.getSha1();
+        this.parent = Branch.getHead();
+        this.parentID = Branch.getHead().getSha1();
         this.blobs = this.parent.blobs;
         this.sha1Set = this.parent.sha1Set;
     }
 
     @Override
     public String toString(){
-        return "commit " + getSha1() + "\n" +
-                "Date " + timestamp.toString() + "\n"
+        return  "===" + "\n" +
+                "commit " + getSha1() + "\n" +
+                "Date: " + timestamp.toString() + "\n"
                 + "message: " + message + "\n"
                 + "ParentCommit: " + this.parentID + "\n"
-                + "blobs: " + this.blobs;
+                + "blobs: " + this.blobs
+                + "\n";
 
     }
 
@@ -75,7 +77,8 @@ public class Commit implements Serializable {
     public void deTrack(String fileName) {
         if (blobs.keySet().contains(fileName)) {
             sha1Set.remove(getBlobSha1(fileName));
-            blobs.remove(fileName);
+            String removedValue = blobs.remove(fileName);
+            System.out.println("detrack: " + removedValue);
         }
     }
 

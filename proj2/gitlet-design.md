@@ -47,4 +47,45 @@
 ## 3/11进度
 * 把commit里的set和map改成tree 解决了write再read后sha-1改变的问题
 * 测试通过以下功能：每次commit 更新存储 head ID, 
+* TODO: 全局Blob容器 Stage for removal 如何persist
+
+## 3/12进度
+* 把removal变成一个staging area里的文件夹 里面的文件名字就是要删除的 和commit一起测试通过
+* 完成commit commend检查，以下三种情况全都会报相应的错误信息不会执行新的command
+  1. staging area和staging for removal都为空，
+  2. 没有输入message
+  3. message只含有空白字符
+* log: 完成不涉及branch的部分（注意删除多余toString信息 目前保留为了方便测试)
+* global-log: 完成
+* find: 完成
+* status: 打算搭好branch的框架以后再写
+* Branch Intro Video Takeaways:
+  1. A branch is a pointer to a commit
+  2. The default branch is MASTER
+  3. Adding a branch just adds a new pointer to the current HEAD
+  4. The HEAD pointer points to the active branch
+  5. When we create a new commit, only the active branch and the HEAD moves.
+  6. The only thing checkout does is switch che Head pointer
+  7. There are two branches != there are tree-like divergings structure
+  8. Possible situation where the tree diverges:
+     * checkout to a previous commit, make change and make new commit
+
+## 3/13进度
+* 开始处理branch 基本思路：
+    1. 在commit文件夹里存一个文件夹叫branch
+    2. branch内部放三个文件: master, new_branch 和head
+    3. master和new_branch存放各自branch的最新commit的ID head存当前active branch的名字
+    4. 刚开始的时候 默认head里是"master"
+    5. head任何时候都是两个branch中的一个
+    6. 把调取branch的操作放到一个新的class里 同样是static
+* 要针对原有代码进行的修改：
+    1. 不要Head file 新建master文件 也放在branch文件夹里 
+    2. 将一部分initCommand的工作放到Branch 里面的initBranch函数里完成
+    3. Branch里完成的任务：
+       * create branch
+       * get current head
+       * get current branch file
+* 修改结束后对已有功能进行测试(不包括branch和checkout) 未发现异常
+* 实现branch命令
+
 
