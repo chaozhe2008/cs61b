@@ -62,6 +62,10 @@ public class Main {
                 validateNumArgs(firstArg, args, 2);
                 Branch.removeBranch(args[1]);
                 break;
+            case "status":
+                validateNumArgs(firstArg, args, 1);
+                Repository.printStatus();
+                break;
             default:
                 System.out.println("No command with that name exists.");
                 break;

@@ -317,9 +317,6 @@ public class Repository {
 
         //Clear Staging area
         clearStagingArea();
-
-        printCurrBranch();
-        printHead();
     }
 
     private static void checkoutCommitFile(String commitId, String fileName) {
@@ -356,4 +353,93 @@ public class Repository {
 
     //----------------------------------------------------------------------//
 
+    //-------------------------------Status---------------------------------//
+
+    /**
+     * helper function: get sha1 of fileName in path
+     */
+    public static String getFileSha1(File path, String fileName){
+        File targetFile = join(path, fileName);
+        return sha1(readContentsAsString(targetFile));
+    }
+
+    /**
+     * helper function: get sha1 in staging area
+     */
+    public static TreeSet<String> getStagingSha1(){
+        TreeSet<String> stagingSha1 = new TreeSet<>();
+        for(String fileName: plainFilenamesIn(STAGING_AREA)){
+            String stagingFileId = getFileSha1(STAGING_AREA, fileName);
+            stagingSha1.add(stagingFileId);
+        }
+        return stagingSha1;
+    }
+
+    public static void printStatus(){
+        // Branches
+        Branch.printBranches();
+
+        // Staged Files
+        System.out.println("=== Staged Files ===");
+        TreeSet<String> stagingNames = new TreeSet<>(plainFilenamesIn(STAGING_AREA));
+        stagingNames.forEach(System.out::println);
+        System.out.println();
+
+        // Staged for Removal
+        System.out.println("=== Removed Files ===");
+        TreeSet<String> removedNames = new TreeSet<>(plainFilenamesIn(REMOVAL_DIR));
+        removedNames.forEach(System.out::println);
+        System.out.println();
+
+        // Modified But Not Staged
+        System.out.println("=== Modifications Not Staged For Commit ===");
+
+        TreeSet<String> stagingSha1 = getStagingSha1();
+        TreeSet<String> modifiedButNotStagedNames = new TreeSet<>();
+        Commit currHead = getHead();
+        // case1: Tracked in the current commit, changed in the working directory, but not staged
+        for(String fileName: currHead.blobs.keySet()){
+            if(!plainFilenamesIn(CWD).contains(fileName)){continue;}
+            String currVersionSha1 = getFileSha1(CWD, fileName);
+            if(!currVersionSha1.equals(currHead.getBlobSha1(fileName))
+                    && !stagingSha1.contains(currVersionSha1)){
+                modifiedButNotStagedNames.add(fileName);
+            }
+        }
+
+        // case2&3: Staged for addition, but with different contents in the working directory or deleted in the working directory
+        for(String fileName: plainFilenamesIn(STAGING_AREA)){
+            if(!plainFilenamesIn(CWD).contains(fileName)){
+                modifiedButNotStagedNames.add(fileName);
+                continue;
+            }
+            String currVersionSha1 = getFileSha1(CWD, fileName);
+            String stagedVersionSha1 = getFileSha1(STAGING_AREA, fileName);
+            if(!currVersionSha1.equals(stagedVersionSha1)){
+                modifiedButNotStagedNames.add(fileName);
+            }
+        }
+
+        // case4: Not staged for removal, but tracked in the current commit and deleted from the working directory.
+        for(String fileName: currHead.blobs.keySet()){
+            if(plainFilenamesIn(REMOVAL_DIR).contains(fileName)){continue;}
+            if(plainFilenamesIn(CWD).contains(fileName)){continue;}
+            modifiedButNotStagedNames.add(fileName);
+        }
+
+        modifiedButNotStagedNames.forEach(System.out::println);
+        System.out.println();
+
+        // Untracked Files
+        TreeSet<String> untrackedNames = new TreeSet<>();
+        System.out.println("=== Untracked Files ===");
+        for(String fileName: plainFilenamesIn(CWD)){
+            if(!plainFilenamesIn(STAGING_AREA).contains(fileName) && !currHead.blobs.keySet().contains(fileName)){
+                untrackedNames.add(fileName);
+            }
+        }
+
+        untrackedNames.forEach(System.out::println);
+        System.out.println();
+    }
 }

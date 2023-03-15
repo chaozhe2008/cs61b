@@ -1,6 +1,7 @@
 package gitlet;
 
 import java.io.File;
+import java.util.TreeSet;
 
 import static gitlet.Utils.*;
 
@@ -60,16 +61,16 @@ public class Branch extends Repository{
         branchFile.delete();
     }
 
-    //----------------------testing methods--------------------//
-    public static void printHead(){
-        System.out.println("Curr Head: \n" + getHead());
-    }
 
-    public static void printCurrBranch(){
-        System.out.println("Curr Branch: \n" + readContentsAsString(HEAD_FILE));
-    }
-
-    public static void printBranch(String branchName){
-        System.out.println(branchName + "\n" + getBranch(branchName));
+    public static void printBranches(){
+        System.out.println("=== Branches ===");
+        TreeSet<String> branchNames = new TreeSet<>(plainFilenamesIn(BRANCH_DIR));
+        String currBranch = readContentsAsString(HEAD_FILE);
+        for(String branchName: branchNames){
+            if(branchName.equals("head")){continue;}
+            if(branchName.equals(currBranch)){System.out.println("*" + branchName);continue;}
+            System.out.println(branchName);
+        }
+        System.out.println();
     }
 }
