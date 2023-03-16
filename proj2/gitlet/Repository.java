@@ -60,12 +60,11 @@ public class Repository {
         COMMITS_DIR.mkdir();
         BLOBS_DIR.mkdir();
         REMOVAL_DIR.mkdir();
-//
+
         String initialSha1 = head.getSha1();
         File initialCommitFile = join(COMMITS_DIR, initialSha1);
         writeObject(initialCommitFile, head);
         Branch.initBranch(head);
-        System.out.println(head);
     }
 
     /** Check if there is .gitlet directory in current directory */
@@ -149,7 +148,7 @@ public class Repository {
         File newCommitFile = join(COMMITS_DIR, newSha1);
         writeObject(newCommitFile, newCommit);
         writeContents(getCurrBranchFile(), newSha1);
-        System.out.println(newCommit);
+        //System.out.println(newCommit);
         return newCommit;
     }
 
@@ -164,7 +163,6 @@ public class Repository {
         }
 
         if(currHead.blobs.keySet().contains(fileName)){
-            System.out.println("FILE TO BE DELETED IS BEING TRACKED");
             File copyFile = join(REMOVAL_DIR, fileName);
             writeContents(copyFile, "Stage for removal");
             if (hasPlainFile(fileName)){
@@ -192,7 +190,7 @@ public class Repository {
      */
     public static void log(){
         Commit currHead = getHead();
-        while(true){
+        while(currHead != null){
             System.out.println(currHead);
             String parentId = currHead.parentID;
             if(parentId == null){return;}
@@ -512,7 +510,7 @@ public class Repository {
         Commit head = getHead();
         Commit splitPoint = getSplitPoint(head, other);
 
-        System.out.println("Split Point: " + "\n" + splitPoint);
+        //System.out.println("Split Point: " + "\n" + splitPoint);
 
         if(splitPoint.getSha1().equals(other.getSha1())){
             System.out.println("Given branch is an ancestor of the current branch.");
@@ -560,7 +558,7 @@ public class Repository {
         String message = "Merged " + branchName + " into " + readContentsAsString(HEAD_FILE);
         Commit mergeCommit = commit(message);
         mergeCommit.secondParentID = other.getSha1();
-        System.out.println("Merge success, new commit:\n" + mergeCommit);
+        //System.out.println("Merge success, new commit:\n" + mergeCommit);
     }
 
     /**

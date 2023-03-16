@@ -24,7 +24,7 @@ public class Commit implements Serializable {
 
     /** The message of this Commit. */
     protected String message;
-    protected Date timestamp;
+    protected String timestamp;
     protected String parentID;
 
     protected String secondParentID;
@@ -35,7 +35,7 @@ public class Commit implements Serializable {
 
     public Commit(){
         this.message = "initial commit";
-        this.timestamp = new Date(0);
+        this.timestamp = convertDate(new Date(0));
         this.parentID = null;
         this.secondParentID = null;
         this.parent = null;
@@ -43,9 +43,16 @@ public class Commit implements Serializable {
         this.sha1Set = new TreeSet<>();
     }
 
+    private static String convertDate(Date date) {
+        Formatter formatter = new Formatter(Locale.US);
+        formatter.format("%1$ta %1$tb %1$td %1$tT %1$tY %1$tz", date);
+        String formattedDate = formatter.toString().replace("+", "-");
+        return formattedDate;
+    }
+
     public Commit(String msg){
         this.message = msg;
-        this.timestamp = new Date();
+        this.timestamp = convertDate(new Date());
         this.parent = Branch.getHead();
         this.parentID = Branch.getHead().getSha1();
         this.secondParentID = null;
@@ -55,14 +62,21 @@ public class Commit implements Serializable {
 
     @Override
     public String toString(){
-        return  "===" + "\n" +
+        return  "===\n" +
                 "commit " + getSha1() + "\n" +
                 "Date: " + timestamp.toString() + "\n"
-                + "message: " + message + "\n"
+                + message + "\n";
+
+    }
+
+    public void print(){
+        System.out.println("===\n" +
+                "commit " + getSha1() + "\n" +
+                "Date: " + timestamp.toString() + "\n"
+                + message + "\n"
                 + "ParentCommit: " + this.parentID + "\n"
                 + "blobs: " + this.blobs
-                + "\n";
-
+                + "\n");
     }
 
     public Commit getParent(){
@@ -94,7 +108,6 @@ public class Commit implements Serializable {
         if (blobs.keySet().contains(fileName)) {
             sha1Set.remove(getBlobSha1(fileName));
             String removedValue = blobs.remove(fileName);
-            System.out.println("detrack: " + removedValue);
         }
     }
 
