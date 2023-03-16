@@ -24,10 +24,6 @@ public class Main {
             case "add":
                 // TODO: handle the `add [filename]` command
                 validateNumArgs(firstArg, args, 2);
-                if(!Repository.hasPlainFile(args[1])){
-                    System.out.println("File does not exist.");
-                    return;
-                }
                 Repository.add(args[1]);
                 break;
             case "commit":
@@ -65,6 +61,14 @@ public class Main {
             case "status":
                 validateNumArgs(firstArg, args, 1);
                 Repository.printStatus();
+                break;
+            case "reset":
+                validateNumArgs(firstArg, args, 2);
+                Repository.reset(args[1]);
+                break;
+            case "merge":
+                validateNumArgs(firstArg, args, 2);
+                Repository.merge(args[1]);
                 break;
             default:
                 System.out.println("No command with that name exists.");

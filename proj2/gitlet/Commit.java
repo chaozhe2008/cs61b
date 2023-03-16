@@ -5,6 +5,7 @@ package gitlet;
 import java.io.Serializable;
 import java.util.*;
 import static gitlet.Utils.*;
+import static gitlet.Repository.*;
 
 /** Represents a gitlet commit object.
  *  TODO: It's a good idea to give a description here of what else this Class
@@ -25,6 +26,8 @@ public class Commit implements Serializable {
     protected String message;
     protected Date timestamp;
     protected String parentID;
+
+    protected String secondParentID;
     protected transient Commit parent;
     protected Map<String, String> blobs;
     protected Set<String> sha1Set;
@@ -34,6 +37,7 @@ public class Commit implements Serializable {
         this.message = "initial commit";
         this.timestamp = new Date(0);
         this.parentID = null;
+        this.secondParentID = null;
         this.parent = null;
         this.blobs = new TreeMap<>();
         this.sha1Set = new TreeSet<>();
@@ -44,6 +48,7 @@ public class Commit implements Serializable {
         this.timestamp = new Date();
         this.parent = Branch.getHead();
         this.parentID = Branch.getHead().getSha1();
+        this.secondParentID = null;
         this.blobs = this.parent.blobs;
         this.sha1Set = this.parent.sha1Set;
     }
@@ -58,6 +63,18 @@ public class Commit implements Serializable {
                 + "blobs: " + this.blobs
                 + "\n";
 
+    }
+
+    public Commit getParent(){
+        if(parentID == null){return null;}
+        Commit parent = readObject(join(COMMITS_DIR, this.parentID), Commit.class);
+        return parent;
+    }
+
+    public Commit getSecondParent(){
+        if(secondParentID == null){return null;}
+        Commit parent = readObject(join(COMMITS_DIR, this.secondParentID), Commit.class);
+        return parent;
     }
 
     public String getSha1(){

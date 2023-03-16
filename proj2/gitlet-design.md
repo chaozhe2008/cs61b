@@ -125,8 +125,66 @@
 * checkout 测试通过 明天开始写status和merge
 
 
-## 3/13进度
+## 3/14进度
 * 完成status 按照四种情况分别实现 测试通过
+* 开始写reset:
+  * Checks out all the files tracked by the given commit. 
+  * Removes tracked files that are not present in that commit. 
+  * Moves the current branch’s head to that commit node.
+  * The staging area is cleared
+  * Failure case:
+      1. If no commit with the given id exists, print ...
+      2. If a working file is untracked in the current branch and would be overwritten by the reset, print ...
+* 打算reuse checkout branch的方法 因此需要独立一部分checkout branch函数的代码
+* 连锁反应对checkout做出以下修改: checkout file 利用checkoutCommitFile 的代码
+* checkoutCommitFile 的输入值从commitID变成commit 输入检查在大的commit里面完成
+* 把checkout branch分成两部分:
+  * 检查branch相关的错误 
+  * 新建checkoutCommit函数（给reset复用）
+* 没有测试checkout修改后的功能（应该没有大问题）
+* 测试通过reset 过程中发现add函数有点问题 add了空文件a.txt之后无法add 空文件b.txt
+* 原因: 两个内容一样但是名字不一样的文件的Sha1不一样!!
+* 解决: 修改add函数检查 不仅要检查sha1 还要检查name
+* 修改完成 可以开始写merge了
+
+## 3/15进度
+* 开始写Merge
+* 先处理Failure cases:
+  * If there are staged additions or removals present
+  * If a branch with the given name does not exist
+  * If attempting to merge a branch with itself
+  TODO:
+  * If merge would generate an error because the commit that it does has no changes in it, just let the normal commit error message for this go through.
+  * If an untracked file in the current commit would be overwritten or deleted by the merge
+* 找到split point:
+  * 两个branch的commit同时往前走 直到遇到交集 如果到其中一个到initial commit 则停止
+  * 测试 getSplitPoint:
+    * Case1: 两个相同commit 返回其自身 测试通过
+    * Case2: 没有分叉 同一直线上先后两点 返回前面的那个 测试通
+    * Case3: 有分叉 在不同分支 返回LCA 测试通过(距离相同/不同)
+    * Case4: 有分叉 一个在分支上 一个在LCA上 返回LCA 测试通过
+    * Case5: 有分叉 一个在分支上 一个在LCA之前 返回后者 测试通过
+* 看了merge的讨论课之后忽然发现之前的想法太简单了 由于merge后会出现一个commit有两个
+    parent的情况 不能线性去想问题 需要做以下改变:
+* 给commit加上second parent属性 ，默认为null
+* 找split point函数里：两个节点分别出发做BFS
+
+## 3/15进度
+* 写Merge文件操作
+* 设当前分支是master 想要merge的branch是other， split node是parent
+    1. 如果文件在master和other里都没有或者都有且一样: 不做任何事
+    2. 如果一个文件在parent里面没有:
+        * master和other如果有一个没有 按照有的来
+        * 如果都有 检查conflict(传给两个参数的check)
+    3. 处理完上述情况后，剩下的情况一定是parent里有  而且在head和other里情况不一样
+       交给conflict check处理
+* checkConflict函数: 因为parent不为null 对parent的版本call equals:
+    1. parent == head: 按照other来(如果other删除则删除)对应ppt 1、6
+    2. parent == other: 按照head来(不需要做任何事)
+    3. 传给两个参数的conflict函数处理
+    
+    
+    
 
 
 
