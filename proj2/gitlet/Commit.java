@@ -95,13 +95,10 @@ public class Commit implements Serializable {
     }
 
     public void print() {
-        System.out.println("===\n" +
-                "commit " + getSha1() + "\n" +
-                "Date: " + timestamp + "\n"
-                + message + "\n"
+        System.out.println("===\n" + "commit " + getSha1() + "\n"
+                + "Date: " + timestamp + "\n" + message + "\n"
                 + "ParentCommit: " + this.parentID + "\n"
-                + "blobs: " + this.blobs
-                + "\n");
+                + "blobs: " + this.blobs + "\n");
     }
 
 //    public Commit getParent() {

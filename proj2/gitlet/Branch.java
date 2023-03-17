@@ -28,7 +28,7 @@ public class Branch extends Repository {
         File currBranchFile = getCurrBranchFile();
         String currHeadId = readContentsAsString(currBranchFile);
         Commit currHead = readObject(join(COMMITS_DIR, currHeadId), Commit.class);
-        //System.out.println("Current Head: \n" + currHead);
+        currHead.parent = null;
         return currHead;
     }
 

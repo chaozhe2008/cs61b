@@ -85,8 +85,8 @@ public class Repository {
 
         // fileName is tracked by current head and is same version as tracked one
         // do not add, remove from staging area
-        if (currHead.blobs.containsKey(fileName) &&
-                currHead.getBlobSha1(fileName).equals(fileSha1)) {
+        if (currHead.blobs.containsKey(fileName)
+                && currHead.getBlobSha1(fileName).equals(fileSha1)) {
             if (plainFilenamesIn(STAGING_AREA).contains(fileName)) {
                 File fileToDelete = join(STAGING_AREA, fileName);
                 if (!fileToDelete.isDirectory()) {
@@ -386,7 +386,6 @@ public class Repository {
     public static void printStatus() {
         // Branches
         Branch.printBranches();
-
         // Staged Files
         System.out.println("=== Staged Files ===");
         TreeSet<String> stagingNames = new TreeSet<>(plainFilenamesIn(STAGING_AREA));
@@ -418,8 +417,7 @@ public class Repository {
             }
         }
 
-        // case2&3: Staged for addition, but with different contents in the working directory
-        // or deleted in the working directory
+        // case2&3: Staged for addition, but with different contents in CWD or deleted
         for (String fileName : plainFilenamesIn(STAGING_AREA)) {
             if (!plainFilenamesIn(CWD).contains(fileName)) {
                 modifiedButNotStagedNames.add(fileName);
@@ -432,8 +430,7 @@ public class Repository {
             }
         }
 
-        // case4: Not staged for removal, but tracked in the current commit
-        // and deleted from the working directory.
+        // case4: Not staged for removal, tracked in the current commit and deleted from CWD.
         for (String fileName : currHead.blobs.keySet()) {
             if (plainFilenamesIn(REMOVAL_DIR).contains(fileName)) {
                 continue;
@@ -462,7 +459,6 @@ public class Repository {
                 untrackedNames.add(fileName);
             }
         }
-
         untrackedNames.forEach(System.out::println);
         System.out.println();
     }
@@ -538,6 +534,7 @@ public class Repository {
 
         Commit other = getBranch(branchName);
         Commit head = getHead();
+
         Commit splitPoint = getSplitPoint(head, other);
 
         //System.out.println("Split Point: " + "\n" + splitPoint);
@@ -638,7 +635,7 @@ public class Repository {
                     otherCommit.getBlobSha1(fileName), fileName)));
         }
 
-        outputStrings.add(">>>>>>>");
+        outputStrings.add(">>>>>>>\n");
 
         StringBuilder sb = new StringBuilder();
         for (String s : outputStrings) {
