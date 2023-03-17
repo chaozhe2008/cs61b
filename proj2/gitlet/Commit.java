@@ -4,14 +4,16 @@ package gitlet;
 
 import java.io.Serializable;
 import java.util.*;
+
 import static gitlet.Utils.*;
 import static gitlet.Repository.*;
 
-/** Represents a gitlet commit object.
+/**
+ * Represents a gitlet commit object.
  *  TODO: It's a good idea to give a description here of what else this Class
  *  does at a high level.
  *
- *  @author TODO
+ * @author TODO
  */
 public class Commit implements Serializable {
     /**
@@ -22,7 +24,9 @@ public class Commit implements Serializable {
      * variable is used. We've provided one example for `message`.
      */
 
-    /** The message of this Commit. */
+    /**
+     * The message of this Commit.
+     */
     protected String message;
     protected String timestamp;
     protected String parentID;
@@ -33,7 +37,7 @@ public class Commit implements Serializable {
     protected Set<String> sha1Set;
     /* TODO: fill in the rest of this class. */
 
-    public Commit(){
+    public Commit() {
         this.message = "initial commit";
         this.timestamp = convertDate(new Date(0));
         this.parentID = null;
@@ -50,7 +54,7 @@ public class Commit implements Serializable {
         return formattedDate;
     }
 
-    public Commit(String msg){
+    public Commit(String msg) {
         this.message = msg;
         this.timestamp = convertDate(new Date());
         this.parent = Branch.getHead();
@@ -61,15 +65,15 @@ public class Commit implements Serializable {
     }
 
     @Override
-    public String toString(){
-        return  "===\n" +
+    public String toString() {
+        return "===\n" +
                 "commit " + getSha1() + "\n" +
                 "Date: " + timestamp.toString() + "\n"
                 + message + "\n";
 
     }
 
-    public void print(){
+    public void print() {
         System.out.println("===\n" +
                 "commit " + getSha1() + "\n" +
                 "Date: " + timestamp.toString() + "\n"
@@ -79,27 +83,31 @@ public class Commit implements Serializable {
                 + "\n");
     }
 
-    public Commit getParent(){
-        if(parentID == null){return null;}
+    public Commit getParent() {
+        if (parentID == null) {
+            return null;
+        }
         Commit parent = readObject(join(COMMITS_DIR, this.parentID), Commit.class);
         return parent;
     }
 
-    public Commit getSecondParent(){
-        if(secondParentID == null){return null;}
+    public Commit getSecondParent() {
+        if (secondParentID == null) {
+            return null;
+        }
         Commit parent = readObject(join(COMMITS_DIR, this.secondParentID), Commit.class);
         return parent;
     }
 
-    public String getSha1(){
+    public String getSha1() {
         return sha1(serialize(this));
     }
 
-    public String getBlobSha1(String fileName){
+    public String getBlobSha1(String fileName) {
         return blobs.get(fileName);
     }
 
-    public void track(String fileName, String sha1){
+    public void track(String fileName, String sha1) {
         sha1Set.add(sha1);
         blobs.put(fileName, sha1);
     }

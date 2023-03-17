@@ -1,21 +1,24 @@
 package gitlet;
 
-/** Driver class for Gitlet, a subset of the Git version-control system.
- *  @author TODO
+/**
+ * Driver class for Gitlet, a subset of the Git version-control system.
+ *
+ * @author TODO
  */
 public class Main {
 
-    /** Usage: java gitlet.Main ARGS, where ARGS contains
-     *  <COMMAND> <OPERAND1> <OPERAND2> ... 
+    /**
+     * Usage: java gitlet.Main ARGS, where ARGS contains
+     * <COMMAND> <OPERAND1> <OPERAND2> ...
      */
     public static void main(String[] args) {
         // TODO: what if args is empty?
-        if(args.length == 0){
+        if (args.length == 0) {
             System.out.println("Please enter a command.");
             return;
         }
         String firstArg = args[0];
-        switch(firstArg) {
+        switch (firstArg) {
             case "init":
                 // TODO: handle the `init` command
                 validateNumArgs(firstArg, args, 1);
@@ -78,17 +81,17 @@ public class Main {
     }
 
     public static void validateNumArgs(String cmd, String[] args, int n) {
-        if(cmd.equals("init") && Repository.checkInit()){
+        if (cmd.equals("init") && Repository.checkInit()) {
             System.out.println("A Gitlet version-control system already exists in the current directory.");
             System.exit(0);
-        }else if(!cmd.equals("init") && !Repository.checkInit()){
+        } else if (!cmd.equals("init") && !Repository.checkInit()) {
             System.out.println("Not in an initialized Gitlet directory.");
             System.exit(0);
         }
 
-        switch (cmd){
-            case "commit":{
-                if(args.length == 1 || (args.length == 2 && args[1].isBlank())) {
+        switch (cmd) {
+            case "commit": {
+                if (args.length == 1 || (args.length == 2 && args[1].isBlank())) {
                     System.out.println("Please enter a commit message.");
                     System.exit(0);
                 }
@@ -101,6 +104,14 @@ public class Main {
 
             case "checkout": {
                 if (args.length > n || args.length <= 1) {
+                    System.out.println("Incorrect operands.");
+                    System.exit(0);
+                }
+                if (args.length == 3 && !args[1].equals("--")) {
+                    System.out.println("Incorrect operands.");
+                    System.exit(0);
+                }
+                if (args.length == 4 && !args[2].equals("--")) {
                     System.out.println("Incorrect operands.");
                     System.exit(0);
                 }

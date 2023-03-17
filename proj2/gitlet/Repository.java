@@ -8,11 +8,12 @@ import static gitlet.Branch.*;
 
 // TODO: any imports you need here
 
-/** Represents a gitlet repository.
+/**
+ * Represents a gitlet repository.
  *  TODO: It's a good idea to give a description here of what else this Class
  *  does at a high level.
  *
- *  @author TODO
+ * @author TODO
  */
 public class Repository {
     /**
@@ -22,26 +23,38 @@ public class Repository {
      * variable is used. We've provided two examples for you.
      */
 
-    /** The current working directory. */
+    /**
+     * The current working directory.
+     */
     public static final File CWD = new File(System.getProperty("user.dir"));
-    /** The .gitlet directory. */
+    /**
+     * The .gitlet directory.
+     */
     public static final File GITLET_DIR = join(CWD, ".gitlet");
 
-    /** The Staging Area directory. */
+    /**
+     * The Staging Area directory.
+     */
 
     public static final File STAGING_AREA = join(GITLET_DIR, "staging");
 
-    /** The Commits directory. */
+    /**
+     * The Commits directory.
+     */
 
     public static final File COMMITS_DIR = join(GITLET_DIR, "commits");
 
-    /** The Blobs directory. */
+    /**
+     * The Blobs directory.
+     */
     public static final File BLOBS_DIR = join(GITLET_DIR, "blobs");
     public static final File BRANCH_DIR = join(GITLET_DIR, "branch");
-//    public static final File HEADFILE = join(BRANCH_DIR, "head");
+    //    public static final File HEADFILE = join(BRANCH_DIR, "head");
     public static final File REMOVAL_DIR = join(STAGING_AREA, "removal");
 
-    /** Current commit (HEAD) */
+    /**
+     * Current commit (HEAD)
+     */
     public static Commit head = new Commit();
     //public static Set<String> removal = new TreeSet<>();
 
@@ -54,7 +67,7 @@ public class Repository {
      * TODO: Add /commits /staging /blobs folders in /.gitlet
      * TODO: save the initial commit into /commits
      */
-    public static void initCommand(){
+    public static void initCommand() {
         GITLET_DIR.mkdir();
         STAGING_AREA.mkdir();
         COMMITS_DIR.mkdir();
@@ -67,23 +80,28 @@ public class Repository {
         Branch.initBranch(head);
     }
 
-    /** Check if there is .gitlet directory in current directory */
-    public static boolean checkInit(){
+    /**
+     * Check if there is .gitlet directory in current directory
+     */
+    public static boolean checkInit() {
         return GITLET_DIR.exists();
     }
 
-    /** Check if the given file name is a plain file in current repo */
-    public static boolean hasPlainFile(String fileName){
+    /**
+     * Check if the given file name is a plain file in current repo
+     */
+    public static boolean hasPlainFile(String fileName) {
         return plainFilenamesIn(CWD).contains(fileName);
     }
 
     /**
      * TODO: read head from persistence(deserialize)
      * TODO: Test the compelete function
+     *
      * @param fileName
      */
-    public static void add(String fileName){
-        if(!hasPlainFile(fileName)){
+    public static void add(String fileName) {
+        if (!hasPlainFile(fileName)) {
             System.out.println("File does not exist.");
             System.exit(0);
         }
@@ -93,8 +111,8 @@ public class Repository {
 
         // fileName is tracked by current head and is same version as tracked one
         // do not add, remove from staging area
-        if(currHead.blobs.keySet().contains(fileName) && currHead.getBlobSha1(fileName).equals(fileSha1)){
-            if (plainFilenamesIn(STAGING_AREA).contains(fileName)){
+        if (currHead.blobs.keySet().contains(fileName) && currHead.getBlobSha1(fileName).equals(fileSha1)) {
+            if (plainFilenamesIn(STAGING_AREA).contains(fileName)) {
                 File fileToDelete = join(STAGING_AREA, fileName);
                 if (!fileToDelete.isDirectory()) {
                     fileToDelete.delete();
@@ -110,7 +128,7 @@ public class Repository {
         unRemove(fileName);
     }
 
-    public static String createBlob(String fileName){
+    public static String createBlob(String fileName) {
         File file = join(STAGING_AREA, fileName);
         String sha1 = sha1(readContents(file));
         File blobDir = join(BLOBS_DIR, sha1);
@@ -121,8 +139,8 @@ public class Repository {
         return sha1;
     }
 
-    public static Commit commit(String msg){
-        if(plainFilenamesIn(STAGING_AREA).isEmpty() && plainFilenamesIn(REMOVAL_DIR).isEmpty()){
+    public static Commit commit(String msg) {
+        if (plainFilenamesIn(STAGING_AREA).isEmpty() && plainFilenamesIn(REMOVAL_DIR).isEmpty()) {
             System.out.println("No changes added to the commit.");
             System.exit(0);
         }
@@ -130,7 +148,7 @@ public class Repository {
         Commit newCommit = new Commit(msg);
 
         //Tracking files in staging area
-        for(String fileName: plainFilenamesIn(STAGING_AREA)){
+        for (String fileName : plainFilenamesIn(STAGING_AREA)) {
             String sha1 = createBlob(fileName);
             newCommit.track(fileName, sha1);
             File fileToDelete = join(STAGING_AREA, fileName);
@@ -139,7 +157,7 @@ public class Repository {
 
 
         //De-tracking files in removal
-        for(String fileName: plainFilenamesIn(REMOVAL_DIR)){
+        for (String fileName : plainFilenamesIn(REMOVAL_DIR)) {
             newCommit.deTrack(fileName);
             unRemove(fileName);
         }
@@ -158,26 +176,30 @@ public class Repository {
         Commit currHead = getHead();
         if (plainFilenamesIn(STAGING_AREA).contains(fileName)) {
             File fileToDelete = join(STAGING_AREA, fileName);
-            if (!fileToDelete.isDirectory()) {fileToDelete.delete();}
+            if (!fileToDelete.isDirectory()) {
+                fileToDelete.delete();
+            }
             res1 = true;
         }
 
-        if(currHead.blobs.keySet().contains(fileName)){
+        if (currHead.blobs.keySet().contains(fileName)) {
             File copyFile = join(REMOVAL_DIR, fileName);
             writeContents(copyFile, "Stage for removal");
-            if (hasPlainFile(fileName)){
+            if (hasPlainFile(fileName)) {
                 restrictedDelete(fileName);
             }
             res2 = true;
         }
 
         boolean res = res1 || res2;
-        if(res == false){System.out.println("No reason to remove the file.");}
+        if (res == false) {
+            System.out.println("No reason to remove the file.");
+        }
         return res;
     }
 
     public static void unRemove(String fileName) {
-        if(plainFilenamesIn(REMOVAL_DIR).contains(fileName)){
+        if (plainFilenamesIn(REMOVAL_DIR).contains(fileName)) {
             join(REMOVAL_DIR, fileName).delete();
         }
     }
@@ -188,12 +210,14 @@ public class Repository {
      * TODO: for example: "Merge: 4975af1 2c1ead1"
      * TODO: First one is the branch you were on when you did the merge; the second is that of the merged-in branch
      */
-    public static void log(){
+    public static void log() {
         Commit currHead = getHead();
-        while(currHead != null){
+        while (currHead != null) {
             System.out.println(currHead);
             String parentId = currHead.parentID;
-            if(parentId == null){return;}
+            if (parentId == null) {
+                return;
+            }
             currHead = readObject(join(COMMITS_DIR, parentId), Commit.class);
         }
     }
@@ -201,52 +225,75 @@ public class Repository {
     /**
      * Display information about all commits ever made. (No order)
      */
-    public static void logGlobal(){
+    public static void logGlobal() {
         Commit commit;
-        for(String id: plainFilenamesIn(COMMITS_DIR)){
-            if(id.equals("head")){continue;}
+        for (String id : plainFilenamesIn(COMMITS_DIR)) {
+            if (id.equals("head")) {
+                continue;
+            }
             commit = readObject(join(COMMITS_DIR, id), Commit.class);
             System.out.println(commit);
         }
     }
 
 
-
-    /**Prints out the ids of all commits that have the given commit message */
-    public static void find(String targetMessage){
+    /**
+     * Prints out the ids of all commits that have the given commit message
+     */
+    public static void find(String targetMessage) {
         Commit commit;
         boolean found = false;
-        for(String id: plainFilenamesIn(COMMITS_DIR)){
-            if(id.equals("head")){continue;}
+        for (String id : plainFilenamesIn(COMMITS_DIR)) {
+            if (id.equals("head")) {
+                continue;
+            }
             commit = readObject(join(COMMITS_DIR, id), Commit.class);
-            if(commit.message.equals(targetMessage)){
+            if (commit.message.equals(targetMessage)) {
                 System.out.println(id);
                 found = true;
             }
         }
-        if(!found){System.out.println("Found no commit with that message.");}
+        if (!found) {
+            System.out.println("Found no commit with that message.");
+        }
     }
 
 
-
     //---------------------------Checkout-------------------------------//
-    public static void checkout(String... args){
+    public static void checkout(String... args) {
         //case1: check out file name
-        if(args.length == 3) {checkoutFile(args[2]);}
+        if (args.length == 3) {
+            checkoutFile(args[2]);
+        }
 
         //case2: check out a branch
-        if(args.length == 2){checkoutBranch(args[1]);}
+        if (args.length == 2) {
+            checkoutBranch(args[1]);
+        }
 
         //case3: check out a file in given branch
-        if(args.length == 4){
-            if (!plainFilenamesIn(COMMITS_DIR).contains(args[1])) { //branch name contains
+        if (args.length == 4) {
+            String targetCommitId = searchPrefix(args[1]);
+            if (targetCommitId == null) { //branch name contains
                 System.out.println("No commit with that id exists.");
                 System.exit(0);
             }
-            Commit targetCommit = readObject(join(COMMITS_DIR, args[1]), Commit.class);
+            Commit targetCommit = readObject(join(COMMITS_DIR, targetCommitId), Commit.class);
             checkoutCommitFile(targetCommit, args[3]);
         }
 
+    }
+
+    public static String searchPrefix(String prefix) {
+        for (String fullId : plainFilenamesIn(COMMITS_DIR)) {
+            if (fullId.startsWith(prefix)) {
+                if (!fullId.equals(prefix) && fullId.length() > 40) {
+                    continue;
+                }
+                return fullId;
+            }
+        }
+        return null;
     }
 
 
@@ -262,7 +309,7 @@ public class Repository {
         }
 
         String currBranch = readContentsAsString(HEAD_FILE);
-        if (currBranch.equals(branchName)){
+        if (currBranch.equals(branchName)) {
             System.out.println("No need to checkout the current branch.");
             System.exit(0);
         }
@@ -277,13 +324,11 @@ public class Repository {
         for (Map.Entry<String, String> entry : targetCommit.blobs.entrySet()) {
             String newFileName = entry.getKey();
             String newFileId = entry.getValue();
-            if(hasPlainFile(newFileName)){
+            if (hasPlainFile(newFileName)) {
                 File workingFile = join(CWD, newFileName);
                 String workingSha1 = sha1(readContents(workingFile));
-                if(!currHead.blobs.keySet().contains(newFileName)){continue;}
-                String currSha1 = currHead.blobs.get(newFileName);
-
-                if(!workingSha1.equals(newFileId) && !workingSha1.equals(currSha1)){
+                boolean tracked = currHead.blobs.keySet().contains(newFileName) && currHead.getBlobSha1(newFileName).equals(workingSha1);
+                if (!tracked && !newFileId.equals(workingSha1)) {
                     System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
                     System.exit(0);
                 }
@@ -294,14 +339,16 @@ public class Repository {
         // Delete all the files in CWD and current head but not in target branch
         Set<String> currTrackingNames = currHead.blobs.keySet();
         Set<String> targetTrackingNames = targetCommit.blobs.keySet();
-        for(String fileName: currTrackingNames){
-            if(plainFilenamesIn(CWD).contains(fileName) && !targetTrackingNames.contains(fileName)){
+        for (String fileName : currTrackingNames) {
+            if (plainFilenamesIn(CWD).contains(fileName) && !targetTrackingNames.contains(fileName)) {
                 restrictedDelete(join(CWD, fileName));
             }
         }
 
         //checkout target commit
-        for(String fileName: targetTrackingNames){checkoutCommitFile(targetCommit, fileName);}
+        for (String fileName : targetTrackingNames) {
+            checkoutCommitFile(targetCommit, fileName);
+        }
 
         //Clear Staging area
         clearStagingArea();
@@ -324,22 +371,24 @@ public class Repository {
     /**
      * Helper function to clear the staging area
      */
-    public static void clearStagingArea(){
-        for(String fileName: plainFilenamesIn(STAGING_AREA)){
+    public static void clearStagingArea() {
+        for (String fileName : plainFilenamesIn(STAGING_AREA)) {
             join(STAGING_AREA, fileName).delete();
         }
-        for(String fileName: plainFilenamesIn(REMOVAL_DIR)){
+        for (String fileName : plainFilenamesIn(REMOVAL_DIR)) {
             join(REMOVAL_DIR, fileName).delete();
         }
     }
 
     //-------------------------------reset----------------------------------//
-    public static void reset(String commitId){
-        if (!plainFilenamesIn(COMMITS_DIR).contains(commitId)) { //branch name contains
+    public static void reset(String commitId) {
+        String targetCommitId = searchPrefix(commitId);
+        if (targetCommitId == null) { //branch name contains
             System.out.println("No commit with that id exists.");
             System.exit(0);
         }
-        Commit targetCommit = readObject(join(COMMITS_DIR, commitId), Commit.class);
+
+        Commit targetCommit = readObject(join(COMMITS_DIR, targetCommitId), Commit.class);
         checkoutCommit(targetCommit);
 
         // Moves the current branch’s head to that commit node.
@@ -353,7 +402,7 @@ public class Repository {
     /**
      * helper function: get sha1 of fileName in path
      */
-    public static String getFileSha1(File path, String fileName){
+    public static String getFileSha1(File path, String fileName) {
         File targetFile = join(path, fileName);
         return sha1(readContentsAsString(targetFile));
     }
@@ -361,16 +410,16 @@ public class Repository {
     /**
      * helper function: get sha1 in staging area
      */
-    public static TreeSet<String> getStagingSha1(){
+    public static TreeSet<String> getStagingSha1() {
         TreeSet<String> stagingSha1 = new TreeSet<>();
-        for(String fileName: plainFilenamesIn(STAGING_AREA)){
+        for (String fileName : plainFilenamesIn(STAGING_AREA)) {
             String stagingFileId = getFileSha1(STAGING_AREA, fileName);
             stagingSha1.add(stagingFileId);
         }
         return stagingSha1;
     }
 
-    public static void printStatus(){
+    public static void printStatus() {
         // Branches
         Branch.printBranches();
 
@@ -393,32 +442,38 @@ public class Repository {
         TreeSet<String> modifiedButNotStagedNames = new TreeSet<>();
         Commit currHead = getHead();
         // case1: Tracked in the current commit, changed in the working directory, but not staged
-        for(String fileName: currHead.blobs.keySet()){
-            if(!plainFilenamesIn(CWD).contains(fileName)){continue;}
+        for (String fileName : currHead.blobs.keySet()) {
+            if (!plainFilenamesIn(CWD).contains(fileName)) {
+                continue;
+            }
             String currVersionSha1 = getFileSha1(CWD, fileName);
-            if(!currVersionSha1.equals(currHead.getBlobSha1(fileName))
-                    && !stagingSha1.contains(currVersionSha1)){
+            if (!currVersionSha1.equals(currHead.getBlobSha1(fileName))
+                    && !stagingSha1.contains(currVersionSha1)) {
                 modifiedButNotStagedNames.add(fileName);
             }
         }
 
         // case2&3: Staged for addition, but with different contents in the working directory or deleted in the working directory
-        for(String fileName: plainFilenamesIn(STAGING_AREA)){
-            if(!plainFilenamesIn(CWD).contains(fileName)){
+        for (String fileName : plainFilenamesIn(STAGING_AREA)) {
+            if (!plainFilenamesIn(CWD).contains(fileName)) {
                 modifiedButNotStagedNames.add(fileName);
                 continue;
             }
             String currVersionSha1 = getFileSha1(CWD, fileName);
             String stagedVersionSha1 = getFileSha1(STAGING_AREA, fileName);
-            if(!currVersionSha1.equals(stagedVersionSha1)){
+            if (!currVersionSha1.equals(stagedVersionSha1)) {
                 modifiedButNotStagedNames.add(fileName);
             }
         }
 
         // case4: Not staged for removal, but tracked in the current commit and deleted from the working directory.
-        for(String fileName: currHead.blobs.keySet()){
-            if(plainFilenamesIn(REMOVAL_DIR).contains(fileName)){continue;}
-            if(plainFilenamesIn(CWD).contains(fileName)){continue;}
+        for (String fileName : currHead.blobs.keySet()) {
+            if (plainFilenamesIn(REMOVAL_DIR).contains(fileName)) {
+                continue;
+            }
+            if (plainFilenamesIn(CWD).contains(fileName)) {
+                continue;
+            }
             modifiedButNotStagedNames.add(fileName);
         }
 
@@ -428,8 +483,8 @@ public class Repository {
         // Untracked Files
         TreeSet<String> untrackedNames = new TreeSet<>();
         System.out.println("=== Untracked Files ===");
-        for(String fileName: plainFilenamesIn(CWD)){
-            if(!plainFilenamesIn(STAGING_AREA).contains(fileName) && !currHead.blobs.keySet().contains(fileName)){
+        for (String fileName : plainFilenamesIn(CWD)) {
+            if (!plainFilenamesIn(STAGING_AREA).contains(fileName) && !currHead.blobs.keySet().contains(fileName)) {
                 untrackedNames.add(fileName);
             }
         }
@@ -439,7 +494,7 @@ public class Repository {
     }
 
     //-------------------------------Merge-------------------------------//
-    public static Commit loadCommit(String id){
+    public static Commit loadCommit(String id) {
         return readObject(join(COMMITS_DIR, id), Commit.class);
     }
 
@@ -490,18 +545,18 @@ public class Repository {
     }
 
 
-    public static void merge(String branchName){
-        if(!plainFilenamesIn(STAGING_AREA).isEmpty() || !plainFilenamesIn(REMOVAL_DIR).isEmpty()){
+    public static void merge(String branchName) {
+        if (!plainFilenamesIn(STAGING_AREA).isEmpty() || !plainFilenamesIn(REMOVAL_DIR).isEmpty()) {
             System.out.println("You have uncommitted changes.");
             System.exit(0);
         }
 
-        if(!plainFilenamesIn(BRANCH_DIR).contains(branchName)){
+        if (!plainFilenamesIn(BRANCH_DIR).contains(branchName)) {
             System.out.println("A branch with that name does not exist.");
             System.exit(0);
         }
 
-        if(readContentsAsString(HEAD_FILE).equals(branchName)){
+        if (readContentsAsString(HEAD_FILE).equals(branchName)) {
             System.out.println("Cannot merge a branch with itself.");
             System.exit(0);
         }
@@ -512,12 +567,12 @@ public class Repository {
 
         //System.out.println("Split Point: " + "\n" + splitPoint);
 
-        if(splitPoint.getSha1().equals(other.getSha1())){
+        if (splitPoint.getSha1().equals(other.getSha1())) {
             System.out.println("Given branch is an ancestor of the current branch.");
             System.exit(0);
         }
 
-        if(splitPoint.getSha1().equals(head.getSha1())){
+        if (splitPoint.getSha1().equals(head.getSha1())) {
             System.out.println("Current branch fast-forwarded.");
             System.exit(0);
         }
@@ -531,20 +586,24 @@ public class Repository {
         allFileNames.addAll(splitPoint.blobs.keySet());
 
         // Iterate over it
-        for(String fileName: allFileNames){
+        for (String fileName : allFileNames) {
             // Case0: head version and target version is same, do nothing
-            if((!head.blobs.keySet().contains(fileName) && !other.blobs.keySet().contains(fileName))
-            || head.getBlobSha1(fileName).equals(other.getBlobSha1(fileName))){
+            String headVersion = head.getBlobSha1(fileName);
+            String otherVersion = other.getBlobSha1(fileName);
+            if (headVersion == null && otherVersion == null) {
+                continue;
+            }
+            if (headVersion != null && otherVersion != null && headVersion.equals(otherVersion)) {
                 continue;
             }
 
             // Case1: not present in split node
-            if(!splitPoint.blobs.keySet().contains(fileName)){
-                if(!head.blobs.keySet().contains(fileName)){
+            if (!splitPoint.blobs.keySet().contains(fileName)) {
+                if (!head.blobs.keySet().contains(fileName)) {
                     // not present in head, stage for addition
                     checkoutCommitFile(other, fileName);
                     add(fileName);
-                }else if(other.blobs.keySet().contains(fileName)){
+                } else if (other.blobs.keySet().contains(fileName)) {
                     // present both in head and other
                     checkConflict(fileName, head, other);
                 }
@@ -555,28 +614,30 @@ public class Repository {
             // Other cases: need to compare modification, use helper function
             checkConflict(fileName, splitPoint, head, other);
         }
-        String message = "Merged " + branchName + " into " + readContentsAsString(HEAD_FILE);
+        String message = "Merged " + branchName + " into " + readContentsAsString(HEAD_FILE) + ".";
         Commit mergeCommit = commit(message);
         mergeCommit.secondParentID = other.getSha1();
-        //System.out.println("Merge success, new commit:\n" + mergeCommit);
     }
 
     /**
      * Merge helper function (including parent)
      * Given head and other and parent commit, compare their version and deal with conflict
+     *
      * @param fileName
      * @param parentCommit
      * @param headCommit
      * @param otherCommit
      */
-    public static void checkConflict(String fileName, Commit parentCommit, Commit headCommit, Commit otherCommit){
+    public static void checkConflict(String fileName, Commit parentCommit, Commit headCommit, Commit otherCommit) {
         // parent == other, head dominates
-        if(parentCommit.getBlobSha1(fileName).equals(otherCommit.getBlobSha1(fileName))){return;}
+        if (parentCommit.getBlobSha1(fileName).equals(otherCommit.getBlobSha1(fileName))) {
+            return;
+        }
         // parent == head, other dominates
-        if(parentCommit.getBlobSha1(fileName).equals(headCommit.getBlobSha1(fileName))){
-            if(!otherCommit.blobs.keySet().contains(fileName)){
+        if (parentCommit.getBlobSha1(fileName).equals(headCommit.getBlobSha1(fileName))) {
+            if (!otherCommit.blobs.keySet().contains(fileName)) {
                 remove(fileName);
-            }else{
+            } else {
                 checkoutCommitFile(otherCommit, fileName);
                 add(fileName);
             }
@@ -589,29 +650,32 @@ public class Repository {
     /**
      * Merge helper function (not including parent)
      * Given head and other commit, compare their version and deal with conflict
+     *
      * @param fileName
      * @param headCommit
      * @param otherCommit
      */
-    public static void checkConflict(String fileName, Commit headCommit, Commit otherCommit){
+    public static void checkConflict(String fileName, Commit headCommit, Commit otherCommit) {
         File conflictFile = join(CWD, fileName);
         ArrayList<String> outputStrings = new ArrayList<>();
         outputStrings.add("<<<<<<< HEAD\n");
 
-        if(headCommit.blobs.keySet().contains(fileName)){
+        if (headCommit.blobs.keySet().contains(fileName)) {
             outputStrings.add(readContentsAsString(join(BLOBS_DIR, headCommit.getBlobSha1(fileName), fileName)));
         }
 
         outputStrings.add("=======\n");
 
-        if(otherCommit.blobs.keySet().contains(fileName)){
+        if (otherCommit.blobs.keySet().contains(fileName)) {
             outputStrings.add(readContentsAsString(join(BLOBS_DIR, otherCommit.getBlobSha1(fileName), fileName)));
         }
 
         outputStrings.add(">>>>>>>");
 
         StringBuilder sb = new StringBuilder();
-        for (String s : outputStrings) {sb.append(s);}
+        for (String s : outputStrings) {
+            sb.append(s);
+        }
         String output = sb.toString();
         writeContents(conflictFile, output);
         add(fileName);
