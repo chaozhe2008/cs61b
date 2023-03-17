@@ -6,23 +6,13 @@ import java.util.*;
 import static gitlet.Utils.*;
 import static gitlet.Branch.*;
 
-// TODO: any imports you need here
 
 /**
  * Represents a gitlet repository.
- *  TODO: It's a good idea to give a description here of what else this Class
- *  does at a high level.
  *
- * @author TODO
+ * @author czy
  */
 public class Repository {
-    /**
-     * TODO: add instance variables here.
-     * List all instance variables of the Repository class here with a useful
-     * comment above them describing what that variable represents and how that
-     * variable is used. We've provided two examples for you.
-     */
-
     /**
      * The current working directory.
      */
@@ -55,18 +45,8 @@ public class Repository {
     /**
      * Current commit (HEAD)
      */
-    public static Commit head = new Commit();
-    //public static Set<String> removal = new TreeSet<>();
+    protected static Commit head = new Commit();
 
-    /* TODO: fill in the rest of this class. */
-//    public Repository(){
-//
-//    }
-
-    /**
-     * TODO: Add /commits /staging /blobs folders in /.gitlet
-     * TODO: save the initial commit into /commits
-     */
     public static void initCommand() {
         GITLET_DIR.mkdir();
         STAGING_AREA.mkdir();
@@ -94,12 +74,6 @@ public class Repository {
         return plainFilenamesIn(CWD).contains(fileName);
     }
 
-    /**
-     * TODO: read head from persistence(deserialize)
-     * TODO: Test the compelete function
-     *
-     * @param fileName
-     */
     public static void add(String fileName) {
         if (!hasPlainFile(fileName)) {
             System.out.println("File does not exist.");
@@ -111,7 +85,8 @@ public class Repository {
 
         // fileName is tracked by current head and is same version as tracked one
         // do not add, remove from staging area
-        if (currHead.blobs.keySet().contains(fileName) && currHead.getBlobSha1(fileName).equals(fileSha1)) {
+        if (currHead.blobs.containsKey(fileName) &&
+                currHead.getBlobSha1(fileName).equals(fileSha1)) {
             if (plainFilenamesIn(STAGING_AREA).contains(fileName)) {
                 File fileToDelete = join(STAGING_AREA, fileName);
                 if (!fileToDelete.isDirectory()) {
@@ -139,36 +114,28 @@ public class Repository {
         return sha1;
     }
 
-    public static Commit commit(String msg) {
+    //---------------------Commit---------------------------//
+    public static void checkUpdate() {
         if (plainFilenamesIn(STAGING_AREA).isEmpty() && plainFilenamesIn(REMOVAL_DIR).isEmpty()) {
             System.out.println("No changes added to the commit.");
             System.exit(0);
         }
-
-        Commit newCommit = new Commit(msg);
-
-        //Tracking files in staging area
-        for (String fileName : plainFilenamesIn(STAGING_AREA)) {
-            String sha1 = createBlob(fileName);
-            newCommit.track(fileName, sha1);
-            File fileToDelete = join(STAGING_AREA, fileName);
-            fileToDelete.delete();
-        }
-
-
-        //De-tracking files in removal
-        for (String fileName : plainFilenamesIn(REMOVAL_DIR)) {
-            newCommit.deTrack(fileName);
-            unRemove(fileName);
-        }
-
-        String newSha1 = newCommit.getSha1();
-        File newCommitFile = join(COMMITS_DIR, newSha1);
-        writeObject(newCommitFile, newCommit);
-        writeContents(getCurrBranchFile(), newSha1);
-        //System.out.println(newCommit);
-        return newCommit;
     }
+
+    public static void commit(String msg) {
+        checkUpdate();
+        Commit newCommit = new Commit(msg);
+        newCommit.setCommit();
+    }
+
+
+    public static void commit(String msg, String secondParentId) {
+        checkUpdate();
+        Commit newCommit = new Commit(msg, secondParentId);
+        newCommit.setCommit();
+    }
+
+    //------------------remove--------------------------//
 
     public static boolean remove(String fileName) {
         boolean res1 = false;
@@ -182,7 +149,7 @@ public class Repository {
             res1 = true;
         }
 
-        if (currHead.blobs.keySet().contains(fileName)) {
+        if (currHead.blobs.containsKey(fileName)) {
             File copyFile = join(REMOVAL_DIR, fileName);
             writeContents(copyFile, "Stage for removal");
             if (hasPlainFile(fileName)) {
@@ -192,7 +159,7 @@ public class Repository {
         }
 
         boolean res = res1 || res2;
-        if (res == false) {
+        if (!res) {
             System.out.println("No reason to remove the file.");
         }
         return res;
@@ -204,12 +171,6 @@ public class Repository {
         }
     }
 
-    /**
-     * TODO: 删除多余commit信息
-     * TODO: For merge commits (those that have two parent commits), add a line just below the first line
-     * TODO: for example: "Merge: 4975af1 2c1ead1"
-     * TODO: First one is the branch you were on when you did the merge; the second is that of the merged-in branch
-     */
     public static void log() {
         Commit currHead = getHead();
         while (currHead != null) {
@@ -327,9 +288,11 @@ public class Repository {
             if (hasPlainFile(newFileName)) {
                 File workingFile = join(CWD, newFileName);
                 String workingSha1 = sha1(readContents(workingFile));
-                boolean tracked = currHead.blobs.keySet().contains(newFileName) && currHead.getBlobSha1(newFileName).equals(workingSha1);
+                boolean tracked = currHead.blobs.containsKey(newFileName)
+                        && currHead.getBlobSha1(newFileName).equals(workingSha1);
                 if (!tracked && !newFileId.equals(workingSha1)) {
-                    System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+                    System.out.println("There is an untracked file in the way; "
+                            + "delete it, or add and commit it first.");
                     System.exit(0);
                 }
             }
@@ -340,7 +303,8 @@ public class Repository {
         Set<String> currTrackingNames = currHead.blobs.keySet();
         Set<String> targetTrackingNames = targetCommit.blobs.keySet();
         for (String fileName : currTrackingNames) {
-            if (plainFilenamesIn(CWD).contains(fileName) && !targetTrackingNames.contains(fileName)) {
+            if (plainFilenamesIn(CWD).contains(fileName)
+                    && !targetTrackingNames.contains(fileName)) {
                 restrictedDelete(join(CWD, fileName));
             }
         }
@@ -355,7 +319,7 @@ public class Repository {
     }
 
     private static void checkoutCommitFile(Commit targetCommit, String fileName) {
-        if (!targetCommit.blobs.keySet().contains(fileName)) {
+        if (!targetCommit.blobs.containsKey(fileName)) {
             System.out.println("File does not exist in that commit.");
             System.exit(0);
         }
@@ -441,7 +405,8 @@ public class Repository {
         TreeSet<String> stagingSha1 = getStagingSha1();
         TreeSet<String> modifiedButNotStagedNames = new TreeSet<>();
         Commit currHead = getHead();
-        // case1: Tracked in the current commit, changed in the working directory, but not staged
+        // case1: Tracked in the current commit
+        // changed in the working directory, but not staged
         for (String fileName : currHead.blobs.keySet()) {
             if (!plainFilenamesIn(CWD).contains(fileName)) {
                 continue;
@@ -453,7 +418,8 @@ public class Repository {
             }
         }
 
-        // case2&3: Staged for addition, but with different contents in the working directory or deleted in the working directory
+        // case2&3: Staged for addition, but with different contents in the working directory
+        // or deleted in the working directory
         for (String fileName : plainFilenamesIn(STAGING_AREA)) {
             if (!plainFilenamesIn(CWD).contains(fileName)) {
                 modifiedButNotStagedNames.add(fileName);
@@ -466,7 +432,8 @@ public class Repository {
             }
         }
 
-        // case4: Not staged for removal, but tracked in the current commit and deleted from the working directory.
+        // case4: Not staged for removal, but tracked in the current commit
+        // and deleted from the working directory.
         for (String fileName : currHead.blobs.keySet()) {
             if (plainFilenamesIn(REMOVAL_DIR).contains(fileName)) {
                 continue;
@@ -477,14 +444,21 @@ public class Repository {
             modifiedButNotStagedNames.add(fileName);
         }
 
-        modifiedButNotStagedNames.forEach(System.out::println);
+        for (String fileName : modifiedButNotStagedNames) {
+            if (hasPlainFile(fileName)) {
+                System.out.println(fileName + " (modified)");
+            } else {
+                System.out.println(fileName + " (deleted)");
+            }
+        }
         System.out.println();
 
         // Untracked Files
         TreeSet<String> untrackedNames = new TreeSet<>();
         System.out.println("=== Untracked Files ===");
         for (String fileName : plainFilenamesIn(CWD)) {
-            if (!plainFilenamesIn(STAGING_AREA).contains(fileName) && !currHead.blobs.keySet().contains(fileName)) {
+            if (!plainFilenamesIn(STAGING_AREA).contains(fileName)
+                    && !currHead.blobs.containsKey(fileName)) {
                 untrackedNames.add(fileName);
             }
         }
@@ -546,7 +520,8 @@ public class Repository {
 
 
     public static void merge(String branchName) {
-        if (!plainFilenamesIn(STAGING_AREA).isEmpty() || !plainFilenamesIn(REMOVAL_DIR).isEmpty()) {
+        if (!plainFilenamesIn(STAGING_AREA).isEmpty()
+                || !plainFilenamesIn(REMOVAL_DIR).isEmpty()) {
             System.out.println("You have uncommitted changes.");
             System.exit(0);
         }
@@ -593,17 +568,17 @@ public class Repository {
             if (headVersion == null && otherVersion == null) {
                 continue;
             }
-            if (headVersion != null && otherVersion != null && headVersion.equals(otherVersion)) {
+            if (headVersion != null && headVersion.equals(otherVersion)) {
                 continue;
             }
 
             // Case1: not present in split node
-            if (!splitPoint.blobs.keySet().contains(fileName)) {
-                if (!head.blobs.keySet().contains(fileName)) {
+            if (!splitPoint.blobs.containsKey(fileName)) {
+                if (!head.blobs.containsKey(fileName)) {
                     // not present in head, stage for addition
                     checkoutCommitFile(other, fileName);
                     add(fileName);
-                } else if (other.blobs.keySet().contains(fileName)) {
+                } else if (other.blobs.containsKey(fileName)) {
                     // present both in head and other
                     checkConflict(fileName, head, other);
                 }
@@ -615,27 +590,22 @@ public class Repository {
             checkConflict(fileName, splitPoint, head, other);
         }
         String message = "Merged " + branchName + " into " + readContentsAsString(HEAD_FILE) + ".";
-        Commit mergeCommit = commit(message);
-        mergeCommit.secondParentID = other.getSha1();
+        commit(message, other.getSha1());
     }
 
     /**
      * Merge helper function (including parent)
      * Given head and other and parent commit, compare their version and deal with conflict
-     *
-     * @param fileName
-     * @param parentCommit
-     * @param headCommit
-     * @param otherCommit
      */
-    public static void checkConflict(String fileName, Commit parentCommit, Commit headCommit, Commit otherCommit) {
+    public static void checkConflict(String fileName, Commit parentCommit,
+                                     Commit headCommit, Commit otherCommit) {
         // parent == other, head dominates
         if (parentCommit.getBlobSha1(fileName).equals(otherCommit.getBlobSha1(fileName))) {
             return;
         }
         // parent == head, other dominates
         if (parentCommit.getBlobSha1(fileName).equals(headCommit.getBlobSha1(fileName))) {
-            if (!otherCommit.blobs.keySet().contains(fileName)) {
+            if (!otherCommit.blobs.containsKey(fileName)) {
                 remove(fileName);
             } else {
                 checkoutCommitFile(otherCommit, fileName);
@@ -643,31 +613,29 @@ public class Repository {
             }
             return;
         }
-        //modified in different ways, check conflit
+        //modified in different ways, check conflict
         checkConflict(fileName, headCommit, otherCommit);
     }
 
     /**
      * Merge helper function (not including parent)
      * Given head and other commit, compare their version and deal with conflict
-     *
-     * @param fileName
-     * @param headCommit
-     * @param otherCommit
      */
     public static void checkConflict(String fileName, Commit headCommit, Commit otherCommit) {
         File conflictFile = join(CWD, fileName);
         ArrayList<String> outputStrings = new ArrayList<>();
         outputStrings.add("<<<<<<< HEAD\n");
 
-        if (headCommit.blobs.keySet().contains(fileName)) {
-            outputStrings.add(readContentsAsString(join(BLOBS_DIR, headCommit.getBlobSha1(fileName), fileName)));
+        if (headCommit.blobs.containsKey(fileName)) {
+            outputStrings.add(readContentsAsString(join(BLOBS_DIR,
+                    headCommit.getBlobSha1(fileName), fileName)));
         }
 
         outputStrings.add("=======\n");
 
-        if (otherCommit.blobs.keySet().contains(fileName)) {
-            outputStrings.add(readContentsAsString(join(BLOBS_DIR, otherCommit.getBlobSha1(fileName), fileName)));
+        if (otherCommit.blobs.containsKey(fileName)) {
+            outputStrings.add(readContentsAsString(join(BLOBS_DIR,
+                    otherCommit.getBlobSha1(fileName), fileName)));
         }
 
         outputStrings.add(">>>>>>>");
@@ -678,6 +646,7 @@ public class Repository {
         }
         String output = sb.toString();
         writeContents(conflictFile, output);
+        System.out.println("Encountered a merge conflict.");
         add(fileName);
     }
 

@@ -1,32 +1,19 @@
 package gitlet;
 
-// TODO: any imports you need here
-
+import java.io.File;
 import java.io.Serializable;
 import java.util.*;
 
+import static gitlet.Branch.getCurrBranchFile;
 import static gitlet.Utils.*;
 import static gitlet.Repository.*;
 
 /**
  * Represents a gitlet commit object.
- *  TODO: It's a good idea to give a description here of what else this Class
- *  does at a high level.
  *
- * @author TODO
+ * @author czy
  */
 public class Commit implements Serializable {
-    /**
-     * TODO: add instance variables here.
-     *
-     * List all instance variables of the Commit class here with a useful
-     * comment above them describing what that variable represents and how that
-     * variable is used. We've provided one example for `message`.
-     */
-
-    /**
-     * The message of this Commit.
-     */
     protected String message;
     protected String timestamp;
     protected String parentID;
@@ -35,7 +22,6 @@ public class Commit implements Serializable {
     protected transient Commit parent;
     protected Map<String, String> blobs;
     protected Set<String> sha1Set;
-    /* TODO: fill in the rest of this class. */
 
     public Commit() {
         this.message = "initial commit";
@@ -45,13 +31,6 @@ public class Commit implements Serializable {
         this.parent = null;
         this.blobs = new TreeMap<>();
         this.sha1Set = new TreeSet<>();
-    }
-
-    private static String convertDate(Date date) {
-        Formatter formatter = new Formatter(Locale.US);
-        formatter.format("%1$ta %1$tb %1$td %1$tT %1$tY %1$tz", date);
-        String formattedDate = formatter.toString().replace("+", "-");
-        return formattedDate;
     }
 
     public Commit(String msg) {
@@ -64,40 +43,84 @@ public class Commit implements Serializable {
         this.sha1Set = this.parent.sha1Set;
     }
 
+    public Commit(String msg, String secondParentID) {
+        this.message = msg;
+        this.timestamp = convertDate(new Date());
+        this.parent = Branch.getHead();
+        this.parentID = Branch.getHead().getSha1();
+        this.secondParentID = secondParentID;
+        this.blobs = this.parent.blobs;
+        this.sha1Set = this.parent.sha1Set;
+    }
+
+    public void setCommit() {
+        //Tracking files in staging area
+        for (String fileName : plainFilenamesIn(STAGING_AREA)) {
+            String sha1 = createBlob(fileName);
+            track(fileName, sha1);
+            File fileToDelete = join(STAGING_AREA, fileName);
+            fileToDelete.delete();
+        }
+
+
+        //De-tracking files in removal
+        for (String fileName : plainFilenamesIn(REMOVAL_DIR)) {
+            deTrack(fileName);
+            unRemove(fileName);
+        }
+
+        String newSha1 = getSha1();
+        File newCommitFile = join(COMMITS_DIR, newSha1);
+        writeObject(newCommitFile, this);
+        writeContents(getCurrBranchFile(), newSha1);
+    }
+
+
+    private static String convertDate(Date date) {
+        Formatter formatter = new Formatter(Locale.US);
+        formatter.format("%1$ta %1$tb %1$td %1$tT %1$tY %1$tz", date);
+        return formatter.toString().replace("+", "-");
+    }
+
     @Override
     public String toString() {
-        return "===\n" +
-                "commit " + getSha1() + "\n" +
-                "Date: " + timestamp.toString() + "\n"
+        String mergeMessage = "";
+        if (secondParentID != null) {
+            mergeMessage = "Merge: " + parentID.substring(0, 7)
+                    + " " + secondParentID.substring(0, 7) + "\n";
+        }
+        return "===\n" + "commit " + getSha1() + "\n" + mergeMessage
+                + "Date: " + timestamp + "\n"
                 + message + "\n";
-
     }
 
     public void print() {
         System.out.println("===\n" +
                 "commit " + getSha1() + "\n" +
-                "Date: " + timestamp.toString() + "\n"
+                "Date: " + timestamp + "\n"
                 + message + "\n"
                 + "ParentCommit: " + this.parentID + "\n"
                 + "blobs: " + this.blobs
                 + "\n");
     }
 
-    public Commit getParent() {
-        if (parentID == null) {
-            return null;
-        }
-        Commit parent = readObject(join(COMMITS_DIR, this.parentID), Commit.class);
-        return parent;
-    }
-
-    public Commit getSecondParent() {
-        if (secondParentID == null) {
-            return null;
-        }
-        Commit parent = readObject(join(COMMITS_DIR, this.secondParentID), Commit.class);
-        return parent;
-    }
+//    public Commit getParent() {
+//        if (parentID == null) {
+//            return null;
+//        }
+//        Commit parentCommit = readObject(join(COMMITS_DIR, this.parentID), Commit.class);
+//        parentCommit.parent = null;
+//        return parent;
+//    }
+//
+//    public Commit getSecondParent() {
+//        if (secondParentID == null) {
+//            return null;
+//        }
+//        Commit secondParent = readObject(join(COMMITS_DIR, this.secondParentID), Commit.class);
+//        secondParent.parent = null;
+//        return secondParent;
+//    }
 
     public String getSha1() {
         return sha1(serialize(this));
@@ -113,7 +136,7 @@ public class Commit implements Serializable {
     }
 
     public void deTrack(String fileName) {
-        if (blobs.keySet().contains(fileName)) {
+        if (blobs.containsKey(fileName)) {
             sha1Set.remove(getBlobSha1(fileName));
             String removedValue = blobs.remove(fileName);
         }

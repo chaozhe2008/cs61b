@@ -198,9 +198,13 @@
         * 如果没有被当前branch追踪而且会被重写 报错
     3. (038)reset 错误 和1是一个问题 因为reset是reuse的前面的代码
     4. (039)没有实现abbreviated ID 补上:暴力搜索 (自己测试通过)
+    5. (101) status里modified but not tracked 要括号具体状态 (测试通过)
 
     * 解决merge相关错误:
         1. (033)Null Exception: 优化检查无需操作时候的if else
+        2. 实现log里两个parent情况: 优化Commit写法 把文件操作单独放在commit class
+           的方法里 overload constructor
+        3. (034)加入Encountered a merge conflict打印信息
     
     
     

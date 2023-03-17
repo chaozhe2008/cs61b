@@ -3,7 +3,7 @@ package gitlet;
 /**
  * Driver class for Gitlet, a subset of the Git version-control system.
  *
- * @author TODO
+ * @author czy
  */
 public class Main {
 
@@ -12,72 +12,66 @@ public class Main {
      * <COMMAND> <OPERAND1> <OPERAND2> ...
      */
     public static void main(String[] args) {
-        // TODO: what if args is empty?
         if (args.length == 0) {
             System.out.println("Please enter a command.");
             return;
         }
         String firstArg = args[0];
         switch (firstArg) {
-            case "init":
-                // TODO: handle the `init` command
+            case "init" -> {
                 validateNumArgs(firstArg, args, 1);
                 Repository.initCommand();
-                break;
-            case "add":
-                // TODO: handle the `add [filename]` command
+            }
+            case "add" -> {
                 validateNumArgs(firstArg, args, 2);
                 Repository.add(args[1]);
-                break;
-            case "commit":
+            }
+            case "commit" -> {
                 validateNumArgs(firstArg, args, 2);
                 Repository.commit(args[1]);
-                break;
-            case "rm":
+            }
+            case "rm" -> {
                 validateNumArgs(firstArg, args, 2);
                 Repository.remove(args[1]);
-                break;
-            case "log":
+            }
+            case "log" -> {
                 validateNumArgs(firstArg, args, 1);
                 Repository.log();
-                break;
-            case "global-log":
+            }
+            case "global-log" -> {
                 validateNumArgs(firstArg, args, 1);
                 Repository.logGlobal();
-                break;
-            case "find":
+            }
+            case "find" -> {
                 validateNumArgs(firstArg, args, 2);
                 Repository.find(args[1]);
-                break;
-            case "checkout":
+            }
+            case "checkout" -> {
                 validateNumArgs(firstArg, args, 4);
                 Repository.checkout(args);
-                break;
-            case "branch":
+            }
+            case "branch" -> {
                 validateNumArgs(firstArg, args, 2);
                 Branch.createBranch(args[1]);
-                break;
-            case "rm-branch":
+            }
+            case "rm-branch" -> {
                 validateNumArgs(firstArg, args, 2);
                 Branch.removeBranch(args[1]);
-                break;
-            case "status":
+            }
+            case "status" -> {
                 validateNumArgs(firstArg, args, 1);
                 Repository.printStatus();
-                break;
-            case "reset":
+            }
+            case "reset" -> {
                 validateNumArgs(firstArg, args, 2);
                 Repository.reset(args[1]);
-                break;
-            case "merge":
+            }
+            case "merge" -> {
                 validateNumArgs(firstArg, args, 2);
                 Repository.merge(args[1]);
-                break;
-            default:
-                System.out.println("No command with that name exists.");
-                break;
+            }
+            default -> System.out.println("No command with that name exists.");
         }
-        return;
     }
 
     public static void validateNumArgs(String cmd, String[] args, int n) {
@@ -90,7 +84,7 @@ public class Main {
         }
 
         switch (cmd) {
-            case "commit": {
+            case "commit" -> {
                 if (args.length == 1 || (args.length == 2 && args[1].isBlank())) {
                     System.out.println("Please enter a commit message.");
                     System.exit(0);
@@ -101,8 +95,7 @@ public class Main {
                 }
                 break;
             }
-
-            case "checkout": {
+            case "checkout" -> {
                 if (args.length > n || args.length <= 1) {
                     System.out.println("Incorrect operands.");
                     System.exit(0);
@@ -117,8 +110,7 @@ public class Main {
                 }
                 break;
             }
-
-            default: {
+            default -> {
                 if (args.length != n) {
                     System.out.println("Incorrect operands.");
                     System.exit(0);
