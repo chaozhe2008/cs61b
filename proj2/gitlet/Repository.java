@@ -126,17 +126,17 @@ public class Repository {
         checkUpdate();
         Commit newCommit = new Commit(msg);
         newCommit.setCommit();
+        clearStagingArea();
     }
-
 
     public static void commit(String msg, String secondParentId) {
         checkUpdate();
         Commit newCommit = new Commit(msg, secondParentId);
         newCommit.setCommit();
+        clearStagingArea();
     }
 
     //------------------remove--------------------------//
-
     public static boolean remove(String fileName) {
         boolean res1 = false;
         boolean res2 = false;
@@ -623,6 +623,7 @@ public class Repository {
         for (String additionFileName : forAdditionFileNames) {
             checkOverwrite(additionFileName, head, other);
             checkoutCommitFile(other, additionFileName);
+            add(additionFileName);
         }
         for (String removalFileName : forRemovalFileNames) {
             remove(removalFileName);
