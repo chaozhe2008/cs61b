@@ -209,8 +209,21 @@
 
 ## 3/17进度
 
-* 继续修改Merge报错case:
-    * （036）
+* 发现merge设计缺陷:没有先检查再执行
+  导致后被遍历到的文件出现错误时前面的文件已经进行修改
+* 修改merge设计:先分类再处理
+
+1. 不需要做任何事情: head 和 other都没有或者版本一样
+2. 需要checkout other:
+    * parent 没有 head没有 other有
+    * parent有 head没动 other动了
+3. 需要remove:
+    * parent有 head没动 other删除了
+4. 跳过其他不需要对head操作的情况 然后把所有其他的check conflict
+5. 对三类文件分别先做检查再做操作
+
+   
+
     
     
 

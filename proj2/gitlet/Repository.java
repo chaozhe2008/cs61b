@@ -242,7 +242,6 @@ public class Repository {
             Commit targetCommit = readObject(join(COMMITS_DIR, targetCommitId), Commit.class);
             checkoutCommitFile(targetCommit, args[3]);
         }
-
     }
 
     public static String searchPrefix(String prefix) {
@@ -256,7 +255,6 @@ public class Repository {
         }
         return null;
     }
-
 
     private static void checkoutFile(String fileName) {
         checkoutCommitFile(getHead(), fileName);
@@ -280,22 +278,29 @@ public class Repository {
         writeContents(HEAD_FILE, branchName);
     }
 
-    private static void checkoutCommit(Commit targetCommit) {
-        Commit currHead = getHead();
-        for (Map.Entry<String, String> entry : targetCommit.blobs.entrySet()) {
-            String newFileName = entry.getKey();
-            String newFileId = entry.getValue();
-            if (hasPlainFile(newFileName)) {
-                File workingFile = join(CWD, newFileName);
-                String workingSha1 = sha1(readContents(workingFile));
-                boolean tracked = currHead.blobs.containsKey(newFileName)
-                        && currHead.getBlobSha1(newFileName).equals(workingSha1);
-                if (!tracked && !newFileId.equals(workingSha1)) {
-                    System.out.println("There is an untracked file in the way; "
-                            + "delete it, or add and commit it first.");
-                    System.exit(0);
-                }
+    /**
+     * check if checkout file in target commit will overwrite untracked working file.
+     */
+    public static void checkOverwrite(String fileName, Commit currCommit, Commit targetCommit) {
+        String newFileId = targetCommit.getBlobSha1(fileName);
+        if (hasPlainFile(fileName)) {
+            File workingFile = join(CWD, fileName);
+            String workingSha1 = sha1(readContents(workingFile));
+            boolean tracked = currCommit.blobs.containsKey(fileName)
+                    && currCommit.getBlobSha1(fileName).equals(workingSha1);
+            if (!tracked && !newFileId.equals(workingSha1)) {
+                System.out.println("There is an untracked file in the way; "
+                        + "delete it, or add and commit it first.");
+                System.exit(0);
             }
+        }
+    }
+
+
+    public static void checkoutCommit(Commit targetCommit) {
+        Commit currHead = getHead();
+        for (String fileName : targetCommit.blobs.keySet()) {
+            checkOverwrite(fileName, currHead, targetCommit);
         }
         // No failure case detected
 
@@ -516,7 +521,10 @@ public class Repository {
     }
 
 
-    public static void merge(String branchName) {
+    /**
+     * check prerequisite for merge command
+     */
+    public static void mergeCheck(String branchName) {
         if (!plainFilenamesIn(STAGING_AREA).isEmpty()
                 || !plainFilenamesIn(REMOVAL_DIR).isEmpty()) {
             System.out.println("You have uncommitted changes.");
@@ -532,7 +540,6 @@ public class Repository {
             System.out.println("Cannot merge a branch with itself.");
             System.exit(0);
         }
-
         Commit other = getBranch(branchName);
         Commit head = getHead();
         head.parent = null;
@@ -549,12 +556,28 @@ public class Repository {
             System.out.println("Current branch fast-forwarded.");
             System.exit(0);
         }
+    }
+
+
+    public static void merge(String branchName) {
+        mergeCheck(branchName);
+        Commit other = getBranch(branchName);
+        Commit head = getHead();
+        Commit splitPoint = getSplitPoint(head, other);
+
         // check completed, perform merging
         // get all file names that involved
         TreeSet<String> allFileNames = new TreeSet<>();
         allFileNames.addAll(head.blobs.keySet());
         allFileNames.addAll(other.blobs.keySet());
         allFileNames.addAll(splitPoint.blobs.keySet());
+
+        // Files staged for checking out from other branch and adding
+        TreeSet<String> forAdditionFileNames = new TreeSet<>();
+        // Files modified in different ways, for further checking
+        TreeSet<String> forConflictFileNames = new TreeSet<>();
+        // Files staged for removal
+        TreeSet<String> forRemovalFileNames = new TreeSet<>();
 
         // Iterate over all files involved
         for (String fileName : allFileNames) {
@@ -572,56 +595,48 @@ public class Repository {
             if (!splitPoint.blobs.containsKey(fileName)) {
                 if (!head.blobs.containsKey(fileName)) {
                     // not present in head, stage for addition
-                    if (plainFilenamesIn(CWD).contains(fileName)) {
-                        File workingFile = join(CWD, fileName);
-                        String workingSha1 = sha1(readContents(workingFile));
-                        if (!other.getBlobSha1(fileName).equals(workingSha1)) {
-                            System.out.println("There is an untracked file in the way; "
-                                    + "delete it, or add and commit it first.");
-                            System.exit(0);
-                        }
-                    }
-                    checkoutCommitFile(other, fileName);
-                    add(fileName);
+                    forAdditionFileNames.add(fileName);
                 } else if (other.blobs.containsKey(fileName)) {
                     // present both in head and other
-                    checkConflict(fileName, head, other);
+                    forConflictFileNames.add(fileName);
                 }
                 continue;
             }
-            // Other cases: need to compare modification, use helper function
-            checkConflict(fileName, splitPoint, head, other);
+            // Case2: present in split node, unmodified in head, other dominates
+            if (splitPoint.getBlobSha1(fileName).equals(head.getBlobSha1(fileName))) {
+                if (!other.blobs.containsKey(fileName)) {
+                    forRemovalFileNames.add(fileName);
+                } else {
+                    forAdditionFileNames.add(fileName);
+                }
+                continue;
+            }
+            // Case3: present in split node, unmodified in other, head dominates (do nothing)
+            if (splitPoint.getBlobSha1(fileName).equals(other.getBlobSha1(fileName))) {
+                continue;
+            }
+
+            //other case: modified in different way: check conflict
+            forConflictFileNames.add(fileName);
+        }
+
+        for (String additionFileName : forAdditionFileNames) {
+            checkOverwrite(additionFileName, head, other);
+            checkoutCommitFile(other, additionFileName);
+        }
+        for (String removalFileName : forRemovalFileNames) {
+            remove(removalFileName);
+        }
+        for (String conflictFileName : forConflictFileNames) {
+            checkConflict(conflictFileName, head, other);
         }
         String message = "Merged " + branchName + " into " + readContentsAsString(HEAD_FILE) + ".";
         commit(message, other.getSha1());
     }
 
-    /**
-     * Merge helper function (including parent)
-     * Given head and other and parent commit, compare their version and deal with conflict
-     */
-    public static void checkConflict(String fileName, Commit parentCommit,
-                                     Commit headCommit, Commit otherCommit) {
-        // parent == other, head dominates
-        if (parentCommit.getBlobSha1(fileName).equals(otherCommit.getBlobSha1(fileName))) {
-            return;
-        }
-        // parent == head, other dominates
-        if (parentCommit.getBlobSha1(fileName).equals(headCommit.getBlobSha1(fileName))) {
-            if (!otherCommit.blobs.containsKey(fileName)) {
-                remove(fileName);
-            } else {
-                checkoutCommitFile(otherCommit, fileName);
-                add(fileName);
-            }
-            return;
-        }
-        //modified in different ways, check conflict
-        checkConflict(fileName, headCommit, otherCommit);
-    }
 
     /**
-     * Merge helper function (not including parent)
+     * Merge helper function
      * Given head and other commit, compare their version and deal with conflict
      */
     public static void checkConflict(String fileName, Commit headCommit, Commit otherCommit) {
