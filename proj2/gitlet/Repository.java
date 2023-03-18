@@ -576,8 +576,8 @@ public class Repository {
                         File workingFile = join(CWD, fileName);
                         String workingSha1 = sha1(readContents(workingFile));
                         if (!other.getBlobSha1(fileName).equals(workingSha1)) {
-                            System.out.println("There is an untracked file in the way; " +
-                                    "delete it, or add and commit it first.");
+                            System.out.println("There is an untracked file in the way; "
+                                    + "delete it, or add and commit it first.");
                             System.exit(0);
                         }
                     }

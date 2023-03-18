@@ -101,24 +101,6 @@ public class Commit implements Serializable {
                 + "blobs: " + this.blobs + "\n");
     }
 
-//    public Commit getParent() {
-//        if (parentID == null) {
-//            return null;
-//        }
-//        Commit parentCommit = readObject(join(COMMITS_DIR, this.parentID), Commit.class);
-//        parentCommit.parent = null;
-//        return parent;
-//    }
-//
-//    public Commit getSecondParent() {
-//        if (secondParentID == null) {
-//            return null;
-//        }
-//        Commit secondParent = readObject(join(COMMITS_DIR, this.secondParentID), Commit.class);
-//        secondParent.parent = null;
-//        return secondParent;
-//    }
-
     public String getSha1() {
         return sha1(serialize(this));
     }
