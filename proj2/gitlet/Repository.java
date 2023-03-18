@@ -332,6 +332,7 @@ public class Repository {
         writeContents(fileToOverwrite, fileContent);
     }
 
+
     /**
      * Helper function to clear the staging area
      */
@@ -534,10 +535,9 @@ public class Repository {
 
         Commit other = getBranch(branchName);
         Commit head = getHead();
+        head.parent = null;
 
         Commit splitPoint = getSplitPoint(head, other);
-
-        //System.out.println("Split Point: " + "\n" + splitPoint);
 
         if (splitPoint.getSha1().equals(other.getSha1())) {
             System.out.println("Given branch is an ancestor of the current branch.");
@@ -545,19 +545,18 @@ public class Repository {
         }
 
         if (splitPoint.getSha1().equals(head.getSha1())) {
+            checkoutCommit(other);
             System.out.println("Current branch fast-forwarded.");
             System.exit(0);
         }
-
         // check completed, perform merging
-
         // get all file names that involved
         TreeSet<String> allFileNames = new TreeSet<>();
         allFileNames.addAll(head.blobs.keySet());
         allFileNames.addAll(other.blobs.keySet());
         allFileNames.addAll(splitPoint.blobs.keySet());
 
-        // Iterate over it
+        // Iterate over all files involved
         for (String fileName : allFileNames) {
             // Case0: head version and target version is same, do nothing
             String headVersion = head.getBlobSha1(fileName);
@@ -573,6 +572,15 @@ public class Repository {
             if (!splitPoint.blobs.containsKey(fileName)) {
                 if (!head.blobs.containsKey(fileName)) {
                     // not present in head, stage for addition
+                    if (plainFilenamesIn(CWD).contains(fileName)) {
+                        File workingFile = join(CWD, fileName);
+                        String workingSha1 = sha1(readContents(workingFile));
+                        if (!other.getBlobSha1(fileName).equals(workingSha1)) {
+                            System.out.println("There is an untracked file in the way; " +
+                                    "delete it, or add and commit it first.");
+                            System.exit(0);
+                        }
+                    }
                     checkoutCommitFile(other, fileName);
                     add(fileName);
                 } else if (other.blobs.containsKey(fileName)) {
@@ -581,8 +589,6 @@ public class Repository {
                 }
                 continue;
             }
-
-
             // Other cases: need to compare modification, use helper function
             checkConflict(fileName, splitPoint, head, other);
         }

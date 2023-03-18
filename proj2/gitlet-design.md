@@ -176,7 +176,7 @@
 * 给commit加上second parent属性 ，默认为null
 * 找split point函数里：两个节点分别出发做BFS
 
-## 3/15进度
+## 3/16进度
 
 * 写Merge文件操作
 * 设当前分支是master 想要merge的branch是other， split node是parent
@@ -205,7 +205,12 @@
         2. 实现log里两个parent情况: 优化Commit写法 把文件操作单独放在commit class
            的方法里 overload constructor
         3. (034)加入Encountered a merge conflict打印信息
-    
+* 再次提交 还有两个case没过 明日解决
+
+## 3/17进度
+
+* 继续修改Merge报错case:
+    * （036）
     
     
 
