@@ -70,6 +70,27 @@ public class Main {
                 validateNumArgs(firstArg, args, 2);
                 Repository.merge(args[1]);
             }
+            case "add-remote" -> {
+                validateNumArgs(firstArg, args, 3);
+                Remote.addRemote(args[1], args[2]);
+            }
+
+            case "rm-remote" -> {
+                validateNumArgs(firstArg, args, 2);
+                Remote.rmRemote(args[1]);
+            }
+            case "push" -> {
+                validateNumArgs(firstArg, args, 3);
+                Remote.push(args[1], args[2]);
+            }
+            case "fetch" -> {
+                validateNumArgs(firstArg, args, 3);
+                Remote.fetch(args[1], args[2]);
+            }
+            case "pull" -> {
+                validateNumArgs(firstArg, args, 3);
+                Remote.pull(args[1], args[2]);
+            }
             default -> System.out.println("No command with that name exists.");
         }
     }

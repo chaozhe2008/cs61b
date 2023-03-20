@@ -39,8 +39,12 @@ public class Repository {
      */
     public static final File BLOBS_DIR = join(GITLET_DIR, "blobs");
     public static final File BRANCH_DIR = join(GITLET_DIR, "branch");
-    //    public static final File HEADFILE = join(BRANCH_DIR, "head");
     public static final File REMOVAL_DIR = join(STAGING_AREA, "removal");
+
+    /**
+     * The Remotes directory.
+     */
+    public static final File REMOTE_DIR = join(GITLET_DIR, "remote");
 
     /**
      * Current commit (HEAD)
@@ -53,6 +57,7 @@ public class Repository {
         COMMITS_DIR.mkdir();
         BLOBS_DIR.mkdir();
         REMOVAL_DIR.mkdir();
+        REMOTE_DIR.mkdir();
 
         String initialSha1 = head.getSha1();
         File initialCommitFile = join(COMMITS_DIR, initialSha1);
@@ -668,5 +673,4 @@ public class Repository {
         System.out.println("Encountered a merge conflict.");
         add(fileName);
     }
-
 }

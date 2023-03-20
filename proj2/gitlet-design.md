@@ -224,7 +224,13 @@
 
 * 修改后提交 出现四个merge错误:
     1. (033 034 035)commit后忘删staging area 修改
-    2. (036-a) 
+    2. (036-a) forAdditionFile 处理完之后忘记add
+* 再次提交 终于全过！！ 开始写remote
+
+## 3/19进度
+
+* fetch: 把remote的branch的从当前commit及其所有父亲拷贝到当前repo
+* 
 
 
    
