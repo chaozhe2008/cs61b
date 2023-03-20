@@ -167,8 +167,8 @@ public class Remote {
 
         // create local branch
         String newBranchName = remoteName + "/" + branchName;
-        createBranch(newBranchName);
-        writeContents(join(BRANCH_DIR, newBranchName), readContentsAsString(targetCommitFile));
+        File newBranchFile = join(BRANCH_DIR, newBranchName);
+        writeContents(newBranchFile, readContentsAsString(targetCommitFile));
 
     }
 
