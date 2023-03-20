@@ -21,7 +21,10 @@ public class Remote {
 
 
     public static void rmRemote(String remoteName) {
-        checkRemoteExist(remoteName);
+        if (!plainFilenamesIn(REMOTE_DIR).contains(remoteName)) {
+            System.out.println("A remote with that name does not exist.");
+            System.exit(0);
+        }
         join(REMOTE_DIR, remoteName).delete();
     }
 
@@ -89,8 +92,8 @@ public class Remote {
             writeObject(join(remoteCommitDir, id), serialize(newCommit));
             //copy blobs
             for (Map.Entry<String, String> entry : newCommit.blobs.entrySet()) {
-                String fileID = entry.getKey();
-                String fileName = entry.getValue();
+                String fileID = entry.getValue();
+                String fileName = entry.getKey();
                 File targetBlob = join(remoteBlobDir, fileID);
                 targetBlob.mkdir();
                 File targetFile = join(targetBlob, fileName);
@@ -152,8 +155,8 @@ public class Remote {
             writeObject(join(COMMITS_DIR, id), serialize(newCommit));
             //copy blobs
             for (Map.Entry<String, String> entry : newCommit.blobs.entrySet()) {
-                String fileID = entry.getKey();
-                String fileName = entry.getValue();
+                String fileID = entry.getValue();
+                String fileName = entry.getKey();
                 File localNewBlob = join(BLOBS_DIR, fileID);
                 localNewBlob.mkdir();
                 File localNewFile = join(localNewBlob, fileName);
