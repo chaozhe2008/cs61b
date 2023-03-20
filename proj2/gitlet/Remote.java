@@ -28,7 +28,7 @@ public class Remote {
     //-------------------------Push-------------------------//
     public static void checkRemoteExist(String remoteName) {
         if (!plainFilenamesIn(REMOTE_DIR).contains(remoteName)) {
-            System.out.println("A remote with that name does not exist.");
+            System.out.println("Remote directory not found.");
             System.exit(0);
         }
     }
