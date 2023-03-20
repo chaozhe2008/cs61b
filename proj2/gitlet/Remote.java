@@ -27,7 +27,9 @@ public class Remote {
 
     //-------------------------Push-------------------------//
     public static void checkRemoteExist(String remoteName) {
-        if (!plainFilenamesIn(REMOTE_DIR).contains(remoteName)) {
+        String remoteDir = readContentsAsString(join(REMOTE_DIR, remoteName));
+        File targetRepo = new File(remoteDir);
+        if (!targetRepo.exists()) {
             System.out.println("Remote directory not found.");
             System.exit(0);
         }
@@ -49,11 +51,6 @@ public class Remote {
     public static void push(String remoteName, String branchName) {
         checkRemoteExist(remoteName);
         String remoteDir = readContentsAsString(join(REMOTE_DIR, remoteName));
-        File targetRepo = new File(remoteDir);
-        if (!targetRepo.exists()) {
-            System.out.println("Remote directory not found.");
-            System.exit(0);
-        }
         File targetCommitFile = join(remoteDir, "branch", branchName);
 
         // If remote Gitlet system exists but does not have the input branch
@@ -126,7 +123,7 @@ public class Remote {
         String remoteDir = readContentsAsString(join(REMOTE_DIR, remoteName));
         File targetCommitFile = join(remoteDir, "branch", branchName);
         if (!targetCommitFile.exists()) {
-            System.out.println("No such branch exists.");
+            System.out.println("That remote does not have that branch.");
             System.exit(0);
         }
 
