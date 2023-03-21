@@ -102,6 +102,9 @@ public class Remote {
                 writeContents(targetFile, currFileContents);
             }
         }
+        writeContents(targetCommitFile, getHead().getSha1());
+
+
     }
 
     //----------------------------fetch---------------------------//
@@ -174,7 +177,6 @@ public class Remote {
         }
         File newBranchFile = join(BRANCH_DIR, newBranchName);
         writeContents(newBranchFile, readContentsAsString(targetCommitFile));
-
     }
 
     public static void pull(String remoteName, String branchName) {

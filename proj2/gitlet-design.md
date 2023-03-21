@@ -230,7 +230,9 @@
 ## 3/19进度
 
 * fetch: 把remote的branch的从当前commit及其所有父亲拷贝到当前repo
-* 
+* push: 反向操作 把branch领先remote branch的部分全部复制过去 把remote的头设置成当前repo的头
+* 最后两个fail case:
+  *（102）push之后没有fast-forwarding
 
 
    
