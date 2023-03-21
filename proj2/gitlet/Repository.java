@@ -278,7 +278,6 @@ public class Repository {
             System.exit(0);
         }
 
-        System.out.println(branchName);
         Commit targetBranch = getBranch(branchName);
         checkoutCommit(targetBranch);
         writeContents(HEAD_FILE, branchName);
