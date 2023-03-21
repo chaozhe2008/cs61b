@@ -181,6 +181,6 @@ public class Remote {
 
     public static void pull(String remoteName, String branchName) {
         fetch(remoteName, branchName);
-        merge(remoteName + "/" + branchName);
+        merge(remoteName + "_" + branchName);
     }
 }
