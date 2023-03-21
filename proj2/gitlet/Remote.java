@@ -157,7 +157,7 @@ public class Remote {
         for (String id : remoteCommitsPath) {
             Commit newCommit = loadRemoteCommit(remoteName, id);
             //copy commit
-            writeObject(join(COMMITS_DIR, id), serialize(newCommit));
+            writeObject(join(COMMITS_DIR, id), newCommit);
             //copy blobs
             for (Map.Entry<String, String> entry : newCommit.blobs.entrySet()) {
                 String fileID = entry.getValue();
