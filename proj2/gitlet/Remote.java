@@ -172,7 +172,9 @@ public class Remote {
 
         // create local branch
         String newBranchName = remoteName + "_" + branchName;
-        createBranch(newBranchName);
+        if (!plainFilenamesIn(BRANCH_DIR).contains(newBranchName)) {
+            createBranch(newBranchName);
+        }
         File newBranchFile = join(BRANCH_DIR, newBranchName);
         writeContents(newBranchFile, readContentsAsString(targetCommitFile));
 
