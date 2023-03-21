@@ -234,7 +234,7 @@ public class Repository {
 
         //case2: check out a branch
         if (args.length == 2) {
-            checkoutBranch(args[1]);
+            checkoutBranch(args[1].replace("/", "_"));
         }
 
         //case3: check out a file in given branch

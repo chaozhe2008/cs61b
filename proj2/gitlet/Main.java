@@ -56,7 +56,7 @@ public class Main {
             }
             case "rm-branch" -> {
                 validateNumArgs(firstArg, args, 2);
-                Branch.removeBranch(args[1]);
+                Branch.removeBranch(args[1].replace("/", "_"));
             }
             case "status" -> {
                 validateNumArgs(firstArg, args, 1);
@@ -68,7 +68,7 @@ public class Main {
             }
             case "merge" -> {
                 validateNumArgs(firstArg, args, 2);
-                Repository.merge(args[1]);
+                Repository.merge(args[1].replace("/", "_"));
             }
             case "add-remote" -> {
                 validateNumArgs(firstArg, args, 3);
@@ -81,15 +81,15 @@ public class Main {
             }
             case "push" -> {
                 validateNumArgs(firstArg, args, 3);
-                Remote.push(args[1], args[2]);
+                Remote.push(args[1], args[2].replace("/", "_"));
             }
             case "fetch" -> {
                 validateNumArgs(firstArg, args, 3);
-                Remote.fetch(args[1], args[2]);
+                Remote.fetch(args[1], args[2].replace("/", "_"));
             }
             case "pull" -> {
                 validateNumArgs(firstArg, args, 3);
-                Remote.pull(args[1], args[2]);
+                Remote.pull(args[1], args[2].replace("/", "_"));
             }
             default -> System.out.println("No command with that name exists.");
         }

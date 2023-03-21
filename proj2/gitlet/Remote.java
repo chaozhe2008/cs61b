@@ -1,6 +1,8 @@
 package gitlet;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 
 import static gitlet.Utils.*;
@@ -125,6 +127,9 @@ public class Remote {
         checkRemoteExist(remoteName);
         String remoteDir = readContentsAsString(join(REMOTE_DIR, remoteName));
         File targetCommitFile = join(remoteDir, "branch", branchName);
+
+//        System.out.println("target branch commit: " + readContentsAsString(targetCommitFile));
+
         if (!targetCommitFile.exists()) {
             System.out.println("That remote does not have that branch.");
             System.exit(0);
@@ -166,7 +171,8 @@ public class Remote {
         }
 
         // create local branch
-        String newBranchName = remoteName + "/" + branchName;
+        String newBranchName = remoteName + "_" + branchName;
+        createBranch(newBranchName);
         File newBranchFile = join(BRANCH_DIR, newBranchName);
         writeContents(newBranchFile, readContentsAsString(targetCommitFile));
 
