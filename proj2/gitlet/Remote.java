@@ -76,11 +76,10 @@ public class Remote {
         Commit curr = getHead();
         Set<String> differentCommitsID = new TreeSet<>();
         while (!curr.getSha1().equals(targetBranchCommitId)) {
+            differentCommitsID.add(curr.getSha1());
             if (curr.secondParentID != null && isParent(curr.secondParentID, targetBranchCommitId)) {
-                differentCommitsID.add(curr.secondParentID);
                 curr = loadCommit(curr.secondParentID);
             } else {
-                differentCommitsID.add(curr.parentID);
                 curr = loadCommit(curr.parentID);
             }
         }
@@ -127,8 +126,6 @@ public class Remote {
         checkRemoteExist(remoteName);
         String remoteDir = readContentsAsString(join(REMOTE_DIR, remoteName));
         File targetCommitFile = join(remoteDir, "branch", branchName);
-
-//        System.out.println("target branch commit: " + readContentsAsString(targetCommitFile));
 
         if (!targetCommitFile.exists()) {
             System.out.println("That remote does not have that branch.");
