@@ -636,7 +636,7 @@ public class Repository {
         for (String conflictFileName : forConflictFileNames) {
             checkConflict(conflictFileName, head, other);
         }
-        String message = "Merged " + branchName + " into " + readContentsAsString(HEAD_FILE) + ".";
+        String message = "Merged " + branchName.replace("_", "/") + " into " + readContentsAsString(HEAD_FILE) + ".";
         commit(message, other.getSha1());
     }
 

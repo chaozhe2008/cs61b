@@ -36,7 +36,6 @@ public class Branch extends Repository {
         File targetBranchFile = join(BRANCH_DIR, branchName);
         String targetBranchId = readContentsAsString(targetBranchFile);
         Commit targetBranch = readObject(join(COMMITS_DIR, targetBranchId), Commit.class);
-        //System.out.println("Target Branch: \n" + targetBranch);
         return targetBranch;
     }
 
